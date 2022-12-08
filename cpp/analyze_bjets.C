@@ -55,7 +55,7 @@ int ScanChain(TChain *ch, string sample_str) {
     tqdm bar;
 
 
-    int event_wgt;
+    float event_wgt;
     ch->SetBranchAddress("event_wgt", &event_wgt);
 
     float event_weight_triggers_dilepton_matched;
