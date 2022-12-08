@@ -95,12 +95,12 @@ int ScanChain(TChain *ch, string sample_str) {
     h_njet->Draw();
     njetPlot->SetLogy();
 
-    string njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
+    string njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_08/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".pdf";
     njetPlot->SaveAs(njetPlotName.data());
     
-    njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
+    njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_08/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".png";
     njetPlot->SaveAs(njetPlotName.data());
