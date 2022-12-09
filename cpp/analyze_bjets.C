@@ -105,7 +105,6 @@ int ScanChain(TChain *ch, string sample_str) {
     } // Event loop
 
 
-
     // move overflow contents to last bin
     h_njet->SetBinContent(njet_nbin, h_njet->GetBinContent(njet_nbin+1) + h_njet->GetBinContent(njet_nbin));
     h_njet->SetBinError(njet_nbin, std::sqrt(std::pow(h_njet->GetBinError(njet_nbin+1),2) + std::pow(h_njet->GetBinError(njet_nbin),2)));
