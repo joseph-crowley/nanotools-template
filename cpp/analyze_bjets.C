@@ -8,10 +8,6 @@
 #include "TTreePerfStats.h"
 #include "TCanvas.h"
 
-//#include "../NanoCORE/Nano.h"
-//#include "../NanoCORE/Base.h"
-//#include "../NanoCORE/SSSelections.cc"
-//#include "../NanoCORE/MetSelections.cc"
 #include "../NanoCORE/tqdm.h"
 
 #include <iostream>
@@ -37,16 +33,6 @@ using namespace std;
 //using namespace tas;
 
 int ScanChain(TChain *ch, string sample_str) {
-
-    string outfile_name = "output_";
-    outfile_name += sample_str;
-    outfile_name += ".root";
-
-    TFile* f1 = new TFile(outfile_name.data(), "RECREATE");
-
-    int const njet_nbin = 7;
-    H1(njet,njet_nbin,0,njet_nbin);
-
     int nEventsTotal = 0;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
@@ -54,25 +40,67 @@ int ScanChain(TChain *ch, string sample_str) {
     TIter fileIter(listOfFiles);
     tqdm bar;
 
+    // make weighted histograms of: 
+    /* njet 
+     * met
+     * Ht for all jets, bjets, and non-bjets
+    */
 
-    float event_wgt;
+    int const njet_nbin = 7;
+    H1(njet,njet_nbin,0,njet_nbin);
+
+    int const met_nbin = 100;
+    H1(met,met_nbin,0,1000);
+
+    int const Ht_nbin = 100;
+    H1(Ht,Ht_nbin,0,1000);
+
+    // set up branches
+
+    double event_wgt;
     ch->SetBranchAddress("event_wgt", &event_wgt);
 
     float event_weight_triggers_dilepton_matched;
     ch->SetBranchAddress("event_weight_triggers_dilepton_matched", &event_weight_triggers_dilepton_matched);
 
-    int njet;
+    unsigned int njet;
     ch->SetBranchAddress("njet", &njet);
 
+    unsigned int nbjet;
+    ch->SetBranchAddress("nbjet", &nbjet);
+
+    double PFMET_pt_final;
+    ch->SetBranchAddress("PFMET_pt_final", &PFMET_pt_final);
+
+    std::vector<float> *jet_pt;
+    ch->SetBranchAddress("jet_pt", &jet_pt);
+
+    std::vector<bool> *jet_is_btagged;
+    ch->SetBranchAddress("jet_is_btagged", &jet_is_btagged);
+
+    // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event){
             ch->GetEntry(event);
 
+            // progress bar
             nEventsTotal++;
             bar.progress(nEventsTotal, nEventsChain);
-
-            //printf("%i\n", njet);
 	    
-            h_njet->Fill(njet-2, event_wgt + event_weight_triggers_dilepton_matched);
+            // loop over jets and count number of non-btagged jets with pt > 40 GeV
+            // also calculate Ht for non-btagged jets
+            unsigned int njet_ct = 0;
+            float Ht = 0;
+            for (unsigned int ijet = 0; ijet < njet; ijet++){ 
+                if  (jet_pt->at(ijet) < 40) continue;
+                if (jet_is_btagged->at(ijet)) continue;
+                njet_ct++;
+                Ht += jet_pt->at(ijet);
+            }
+
+            // fill histograms
+            h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
+            h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
+            h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
 
     } // Event loop
 
@@ -88,6 +116,9 @@ int ScanChain(TChain *ch, string sample_str) {
 
     bar.finish();
 
+    // make plots
+    
+    // njet plot
     TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
     njetPlot->cd();
     h_njet->GetXaxis()->SetTitle("n_{jet}");
@@ -95,15 +126,61 @@ int ScanChain(TChain *ch, string sample_str) {
     h_njet->Draw();
     njetPlot->SetLogy();
 
-    string njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_08/njet_";
+    string njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".pdf";
     njetPlot->SaveAs(njetPlotName.data());
     
-    njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_08/njet_";
+    njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".png";
     njetPlot->SaveAs(njetPlotName.data());
+
+    // met plot
+    TCanvas *metPlot = new TCanvas("met","met", 1000,800);
+    metPlot->cd();
+    h_met->GetXaxis()->SetTitle("MET [GeV]");
+    h_met->GetYaxis()->SetTitle("Events");
+    h_met->Draw();
+    metPlot->SetLogy();
+
+    string metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
+    metPlotName += sample_str;
+    metPlotName += ".pdf";
+    metPlot->SaveAs(metPlotName.data());
+
+    metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
+    metPlotName += sample_str;
+    metPlotName += ".png";
+    metPlot->SaveAs(metPlotName.data());
+        
+    // Ht plot
+    TCanvas *HtPlot = new TCanvas("Ht","Ht", 1000,800);
+    HtPlot->cd();
+    h_Ht->GetXaxis()->SetTitle("H_{T} [GeV]");
+    h_Ht->GetYaxis()->SetTitle("Events");
+    h_Ht->Draw();
+    HtPlot->SetLogy();
+
+    string HtPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/Ht_";
+    HtPlotName += sample_str;
+    HtPlotName += ".pdf";
+    HtPlot->SaveAs(HtPlotName.data());
+
+    HtPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/Ht_";
+    HtPlotName += sample_str;
+    HtPlotName += ".png";
+    HtPlot->SaveAs(HtPlotName.data());
+
+    // save histograms to root file
+    string outfile_name = "output_";
+    outfile_name += sample_str;
+    outfile_name += ".root";
+
+    TFile* f1 = new TFile(outfile_name.data(), "RECREATE");
+    h_njet->Write();
+    h_met->Write();
+    h_Ht->Write();
 
     f1->Write();
     f1->Close();
