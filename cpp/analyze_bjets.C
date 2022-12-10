@@ -139,7 +139,7 @@ int ScanChain(TChain *ch, string sample_str) {
 
     // make plots
     
-    string plotDir = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_10/";
+    string plotDir = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_10_separate/";
     // njet plot
     TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
     njetPlot->cd();
