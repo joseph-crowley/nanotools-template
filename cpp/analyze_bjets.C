@@ -36,7 +36,7 @@ struct debugger { template<typename T> debugger& operator , (const T& v) { cerr<
 using namespace std;
 //using namespace tas;
 
-int ScanChain(TChain *ch, string sample_str) {
+int ScanChain(TChain *ch, string sample_str, string plotDir) {
     int nEventsTotal = 0;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
@@ -139,7 +139,6 @@ int ScanChain(TChain *ch, string sample_str) {
 
     // make plots
     
-    string plotDir = "/home/users/crowley/public_html/test/";
     // njet plot
     TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
     njetPlot->cd();
@@ -149,13 +148,13 @@ int ScanChain(TChain *ch, string sample_str) {
     njetPlot->SetLogy();
 //    std::cout << "17" << endl;
 
-    string njetPlotName = plotDir + "njet_";
+    string njetPlotName = plotDir + "/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".pdf";
     njetPlot->SaveAs(njetPlotName.data());
 //    std::cout << "18" << endl;
     
-    njetPlotName = plotDir + "njet_";
+    njetPlotName = plotDir + "/njet_";
     njetPlotName += sample_str;
     njetPlotName += ".png";
     njetPlot->SaveAs(njetPlotName.data());
@@ -169,12 +168,12 @@ int ScanChain(TChain *ch, string sample_str) {
     h_met->Draw();
     metPlot->SetLogy();
 
-    string metPlotName = plotDir + "met_";
+    string metPlotName = plotDir + "/met_";
     metPlotName += sample_str;
     metPlotName += ".pdf";
     metPlot->SaveAs(metPlotName.data());
 
-    metPlotName = plotDir + "met_";
+    metPlotName = plotDir + "/met_";
     metPlotName += sample_str;
     metPlotName += ".png";
     metPlot->SaveAs(metPlotName.data());
@@ -187,12 +186,12 @@ int ScanChain(TChain *ch, string sample_str) {
     h_Ht->Draw();
     HtPlot->SetLogy();
 
-    string HtPlotName = plotDir + "Ht_";
+    string HtPlotName = plotDir + "/Ht_";
     HtPlotName += sample_str;
     HtPlotName += ".pdf";
     HtPlot->SaveAs(HtPlotName.data());
 
-    HtPlotName = plotDir + "Ht_";
+    HtPlotName = plotDir + "/Ht_";
     HtPlotName += sample_str;
     HtPlotName += ".png";
     HtPlot->SaveAs(HtPlotName.data());
