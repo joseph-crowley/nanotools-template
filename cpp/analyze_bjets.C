@@ -55,8 +55,8 @@ int ScanChain(TChain *ch, string sample_str) {
     H1(njet,njet_nbin,0,njet_nbin);
 //    std::cout << "2" << endl;
 
-    //int const met_nbin = 100;
-    //H1(met,met_nbin,0,1000);
+    int const met_nbin = 100;
+    H1(met,met_nbin,0,1000);
 
     int const Ht_nbin = 100;
     H1(Ht,Ht_nbin,0,1000);
@@ -116,7 +116,7 @@ int ScanChain(TChain *ch, string sample_str) {
             // fill histograms
             h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
 //            std::cout << "12" << endl;
-            //h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
+            h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
             h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
 
     } // Event loop
@@ -139,7 +139,7 @@ int ScanChain(TChain *ch, string sample_str) {
 
     // make plots
     
-    string plotDir = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_10_separate/";
+    string plotDir = "/home/users/crowley/public_html/test/";
     // njet plot
     TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
     njetPlot->cd();
@@ -161,24 +161,24 @@ int ScanChain(TChain *ch, string sample_str) {
     njetPlot->SaveAs(njetPlotName.data());
 
 //    std::cout << "19" << endl;
-    //// met plot
-    //TCanvas *metPlot = new TCanvas("met","met", 1000,800);
-    //metPlot->cd();
-    //h_met->GetXaxis()->SetTitle("MET [GeV]");
-    //h_met->GetYaxis()->SetTitle("Events");
-    //h_met->Draw();
-    //metPlot->SetLogy();
+    // met plot
+    TCanvas *metPlot = new TCanvas("p_{T}^{miss}","p_{T}^{miss}", 1000,800);
+    metPlot->cd();
+    h_met->GetXaxis()->SetTitle("p_{T}^{miss}");
+    h_met->GetYaxis()->SetTitle("Events");
+    h_met->Draw();
+    metPlot->SetLogy();
 
-    //string metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
-    //metPlotName += sample_str;
-    //metPlotName += ".pdf";
-    //metPlot->SaveAs(metPlotName.data());
+    string metPlotName = plotDir + "met_";
+    metPlotName += sample_str;
+    metPlotName += ".pdf";
+    metPlot->SaveAs(metPlotName.data());
 
-    //metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
-    //metPlotName += sample_str;
-    //metPlotName += ".png";
-    //metPlot->SaveAs(metPlotName.data());
-    //    
+    metPlotName = plotDir + "met_";
+    metPlotName += sample_str;
+    metPlotName += ".png";
+    metPlot->SaveAs(metPlotName.data());
+        
     // Ht plot
     TCanvas *HtPlot = new TCanvas("Ht","Ht", 1000,800);
     HtPlot->cd();
@@ -207,7 +207,7 @@ int ScanChain(TChain *ch, string sample_str) {
     TFile* f1 = new TFile(outfile_name.data(), "RECREATE");
     h_njet->Write();
 //    std::cout << "22" << endl;
-    //h_met->Write();
+    h_met->Write();
     h_Ht->Write();
 
     f1->Write();
