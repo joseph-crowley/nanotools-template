@@ -8,6 +8,10 @@
 #include "TTreePerfStats.h"
 #include "TCanvas.h"
 
+//#include "../NanoCORE/Nano.h"
+//#include "../NanoCORE/Base.h"
+//#include "../NanoCORE/SSSelections.cc"
+//#include "../NanoCORE/MetSelections.cc"
 #include "../NanoCORE/tqdm.h"
 
 #include <iostream>
@@ -46,11 +50,13 @@ int ScanChain(TChain *ch, string sample_str) {
      * Ht for all jets, bjets, and non-bjets
     */
 
+    std::cout << "1" << endl;
     int const njet_nbin = 7;
     H1(njet,njet_nbin,0,njet_nbin);
+    std::cout << "2" << endl;
 
-    int const met_nbin = 100;
-    H1(met,met_nbin,0,1000);
+    //int const met_nbin = 100;
+    //H1(met,met_nbin,0,1000);
 
     int const Ht_nbin = 100;
     H1(Ht,Ht_nbin,0,1000);
@@ -65,58 +71,75 @@ int ScanChain(TChain *ch, string sample_str) {
 
     unsigned int njet;
     ch->SetBranchAddress("njet", &njet);
+    std::cout << "3" << endl;
 
     unsigned int nbjet;
     ch->SetBranchAddress("nbjet", &nbjet);
+    std::cout << "4" << endl;
 
     double PFMET_pt_final;
     ch->SetBranchAddress("PFMET_pt_final", &PFMET_pt_final);
+    std::cout << "5" << endl;
 
-    std::vector<float> *jet_pt;
+    std::vector<float> *jet_pt = 0;
     ch->SetBranchAddress("jet_pt", &jet_pt);
+    std::cout << "6" << endl;
 
-    std::vector<bool> *jet_is_btagged;
+    std::vector<bool> *jet_is_btagged = 0;
     ch->SetBranchAddress("jet_is_btagged", &jet_is_btagged);
+    std::cout << "7" << endl;
 
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event){
+    std::cout << "8" << endl;
             ch->GetEntry(event);
+            std::cout << "9" << endl;
 
             // progress bar
             nEventsTotal++;
             bar.progress(nEventsTotal, nEventsChain);
 	    
-            // loop over jets and count number of non-btagged jets with pt > 40 GeV
-            // also calculate Ht for non-btagged jets
-            unsigned int njet_ct = 0;
+            std::cout << "10" << endl;
+            // iterate over jets and count number of non-btagged jets with pt > 40 GeV
+            // and calculate Ht
+            int njet_ct = 0;
             float Ht = 0;
-            for (unsigned int ijet = 0; ijet < njet; ijet++){ 
-                if  (jet_pt->at(ijet) < 40) continue;
-                if (jet_is_btagged->at(ijet)) continue;
+            for (unsigned int i = 0; i < njet; i++){
+                if (!(jet_pt->at(i) > 40) || jet_is_btagged->at(i)) continue;
                 njet_ct++;
-                Ht += jet_pt->at(ijet);
+                Ht += jet_pt->at(i);
             }
+
+
+            std::cout << "11" << endl;
 
             // fill histograms
             h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
-            h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
+            std::cout << "12" << endl;
+            //h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
             h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
 
     } // Event loop
 
 
+    std::cout << "13" << endl;
+
     // move overflow contents to last bin
     h_njet->SetBinContent(njet_nbin, h_njet->GetBinContent(njet_nbin+1) + h_njet->GetBinContent(njet_nbin));
     h_njet->SetBinError(njet_nbin, std::sqrt(std::pow(h_njet->GetBinError(njet_nbin+1),2) + std::pow(h_njet->GetBinError(njet_nbin),2)));
 
+    std::cout << "14" << endl;
     // set overflow bin to 0
     h_njet->SetBinContent(njet_nbin+1, 0);
     h_njet->SetBinError(njet_nbin+1, 0);
+    std::cout << "15" << endl;
 
     bar.finish();
+    std::cout << "16" << endl;
 
     // make plots
     
+    string plotDir = "/home/users/crowley/public_html/tttt_jet_distribution_check_12_10/";
     // njet plot
     TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
     njetPlot->cd();
@@ -124,35 +147,38 @@ int ScanChain(TChain *ch, string sample_str) {
     h_njet->GetYaxis()->SetTitle("Events");
     h_njet->Draw();
     njetPlot->SetLogy();
+    std::cout << "17" << endl;
 
-    string njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
+    string njetPlotName = plotDir + "njet_";
     njetPlotName += sample_str;
     njetPlotName += ".pdf";
     njetPlot->SaveAs(njetPlotName.data());
+    std::cout << "18" << endl;
     
-    njetPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/njet_";
+    njetPlotName = plotDir + "njet_";
     njetPlotName += sample_str;
     njetPlotName += ".png";
     njetPlot->SaveAs(njetPlotName.data());
 
-    // met plot
-    TCanvas *metPlot = new TCanvas("met","met", 1000,800);
-    metPlot->cd();
-    h_met->GetXaxis()->SetTitle("MET [GeV]");
-    h_met->GetYaxis()->SetTitle("Events");
-    h_met->Draw();
-    metPlot->SetLogy();
+    std::cout << "19" << endl;
+    //// met plot
+    //TCanvas *metPlot = new TCanvas("met","met", 1000,800);
+    //metPlot->cd();
+    //h_met->GetXaxis()->SetTitle("MET [GeV]");
+    //h_met->GetYaxis()->SetTitle("Events");
+    //h_met->Draw();
+    //metPlot->SetLogy();
 
-    string metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
-    metPlotName += sample_str;
-    metPlotName += ".pdf";
-    metPlot->SaveAs(metPlotName.data());
+    //string metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
+    //metPlotName += sample_str;
+    //metPlotName += ".pdf";
+    //metPlot->SaveAs(metPlotName.data());
 
-    metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
-    metPlotName += sample_str;
-    metPlotName += ".png";
-    metPlot->SaveAs(metPlotName.data());
-        
+    //metPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/met_";
+    //metPlotName += sample_str;
+    //metPlotName += ".png";
+    //metPlot->SaveAs(metPlotName.data());
+    //    
     // Ht plot
     TCanvas *HtPlot = new TCanvas("Ht","Ht", 1000,800);
     HtPlot->cd();
@@ -161,24 +187,27 @@ int ScanChain(TChain *ch, string sample_str) {
     h_Ht->Draw();
     HtPlot->SetLogy();
 
-    string HtPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/Ht_";
+    string HtPlotName = plotDir + "Ht_";
     HtPlotName += sample_str;
     HtPlotName += ".pdf";
     HtPlot->SaveAs(HtPlotName.data());
 
-    HtPlotName = "/home/users/crowley/public_html/tttt_jet_distribution_check/Ht_";
+    HtPlotName = plotDir + "Ht_";
     HtPlotName += sample_str;
     HtPlotName += ".png";
     HtPlot->SaveAs(HtPlotName.data());
 
+    std::cout << "20" << endl;
     // save histograms to root file
     string outfile_name = "output_";
     outfile_name += sample_str;
     outfile_name += ".root";
+    std::cout << "21" << endl;
 
     TFile* f1 = new TFile(outfile_name.data(), "RECREATE");
     h_njet->Write();
-    h_met->Write();
+    std::cout << "22" << endl;
+    //h_met->Write();
     h_Ht->Write();
 
     f1->Write();
