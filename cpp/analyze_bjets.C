@@ -55,7 +55,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir) {
     H1(njet,njet_nbin,0,njet_nbin);
 //    std::cout << "2" << endl;
 
-    int const met_nbin = 100;
+    int const met_nbin = 40;
     H1(met,met_nbin,0,1000);
 
     int const Ht_nbin = 100;
@@ -105,16 +105,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir) {
             int njet_ct = 0;
             float Ht = 0;
             for (unsigned int i = 0; i < njet; i++){
-                if (!(jet_pt->at(i) > 40) || jet_is_btagged->at(i)) continue;
-                njet_ct++;
-                Ht += jet_pt->at(i);
+                auto const& is_btagged = jet_is_btagged->at(i);
+                auto const& pt = jet_pt->at(i);
+                float const pt_threshold = (is_btagged ? 25. : 40.);
+                if (pt>pt_threshold) Ht += pt;
+                if (!is_btagged) njet_ct++;
             }
-
 
 //            std::cout << "11" << endl;
 
             // fill histograms
-            h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
+            // keep the full MET dist, but only plot njet for MET>50GeV
+            if (PFMET_pt_final>50.)
+                h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
 //            std::cout << "12" << endl;
             h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
             h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
@@ -127,11 +130,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir) {
     // move overflow contents to last bin
     h_njet->SetBinContent(njet_nbin, h_njet->GetBinContent(njet_nbin+1) + h_njet->GetBinContent(njet_nbin));
     h_njet->SetBinError(njet_nbin, std::sqrt(std::pow(h_njet->GetBinError(njet_nbin+1),2) + std::pow(h_njet->GetBinError(njet_nbin),2)));
+    h_met->SetBinContent(met_nbin, h_met->GetBinContent(met_nbin+1) + h_met->GetBinContent(met_nbin));
+    h_met->SetBinError(met_nbin, std::sqrt(std::pow(h_met->GetBinError(met_nbin+1),2) + std::pow(h_met->GetBinError(met_nbin),2)));
+    h_Ht->SetBinContent(Ht_nbin, h_Ht->GetBinContent(Ht_nbin+1) + h_Ht->GetBinContent(Ht_nbin));
+    h_Ht->SetBinError(Ht_nbin, std::sqrt(std::pow(h_Ht->GetBinError(Ht_nbin+1),2) + std::pow(h_Ht->GetBinError(Ht_nbin),2)));
 
 //    std::cout << "14" << endl;
     // set overflow bin to 0
     h_njet->SetBinContent(njet_nbin+1, 0);
     h_njet->SetBinError(njet_nbin+1, 0);
+    h_Ht->SetBinContent(Ht_nbin+1, 0);
+    h_Ht->SetBinError(Ht_nbin+1, 0);
+    h_met->SetBinContent(met_nbin+1, 0);
+    h_met->SetBinError(met_nbin+1, 0);
 //    std::cout << "15" << endl;
 
     bar.finish();
