@@ -7,6 +7,9 @@
 #include "TTreeCacheUnzip.h"
 #include "TTreePerfStats.h"
 #include "TCanvas.h"
+#include "THStack.h"
+#include "TStyle.h"
+#include "TLegend.h"
 
 //#include "../NanoCORE/Nano.h"
 //#include "../NanoCORE/Base.h"
@@ -36,7 +39,7 @@ struct debugger { template<typename T> debugger& operator , (const T& v) { cerr<
 using namespace std;
 //using namespace tas;
 
-int ScanChain(TChain *ch, string sample_str, string plotDir) {
+int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int nEventsTotal = 0;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
@@ -209,18 +212,198 @@ int ScanChain(TChain *ch, string sample_str, string plotDir) {
 
 //    std::cout << "20" << endl;
     // save histograms to root file
-    string outfile_name = "output_";
+    string outfile_name = rootDir + "/hists_";
     outfile_name += sample_str;
     outfile_name += ".root";
 //    std::cout << "21" << endl;
 
-    TFile* f1 = new TFile(outfile_name.data(), "RECREATE");
+    TFile* f = new TFile(outfile_name.data(), "RECREATE");
     h_njet->Write();
 //    std::cout << "22" << endl;
     h_met->Write();
     h_Ht->Write();
 
-    f1->Write();
-    f1->Close();
+    f->Write();
+    f->Close();
+    return 0;
+}
+
+// define a compareHists function for comparing the histograms 
+// from different samples by integrating over the bins
+// and making a plot
+bool compareHists(TH1D* h1, TH1D* h2){
+
+    // get the number of bins
+    int nbins = h1->GetNbinsX();
+    // get the bin width
+    double binwidth = h1->GetBinWidth(1);
+    // get the bin contents
+    double h1_integral = 0;
+    double h2_integral = 0;
+    for(int i = 1; i <= nbins; i++){
+        h1_integral += h1->GetBinContent(i);
+        h2_integral += h2->GetBinContent(i);
+    }
+    // get the bin errors
+    double h1_error = 0;
+    double h2_error = 0;
+    for(int i = 1; i <= nbins; i++){
+        h1_error += std::pow(h1->GetBinError(i),2);
+        h2_error += std::pow(h2->GetBinError(i),2);
+    }
+    h1_error = std::sqrt(h1_error);
+    h2_error = std::sqrt(h2_error);
+
+    // get the bin contents and errors normalized to the bin width
+    double h1_integral_norm = h1_integral/binwidth;
+    double h2_integral_norm = h2_integral/binwidth;
+    double h1_error_norm = h1_error/binwidth;
+    double h2_error_norm = h2_error/binwidth;
+
+    // compare the bin contents and errors to see if h1 < h2
+    return (h1_integral_norm < h2_integral_norm);
+
+    // TODO: is this the right way to compare two histograms?
+    //// correct for the errors
+    //double h1_integral_norm_err = h1_integral_norm - h1_error_norm;
+    //double h2_integral_norm_err = h2_integral_norm + h2_error_norm;
+    //if(h1_integral_norm_err < h2_integral_norm_err){
+    //    return true;
+    //}
+    //else{
+    //    return false;
+    //}
+}
+
+// Create a macro to stack the histograms and make a plot
+int stackHists(string hname, vector<string> rootFiles, string plotDir){
+    // stack histogram hname from rootFiles, make a plot, save the plot,
+    // save the stacked histograms to a root file
+
+    // hname is of the form njet, met, Ht
+    // replace this with n_{jet}, p_{T}^{miss}, H_{T}
+    // and the number of bins and the range of the histogram
+    int nbins = 0;
+    double xmin = 0;
+    double xmax = 0;
+    string hname_latex = hname;
+    if(hname == "njet"){
+        hname_latex = "n_{jet}";
+        nbins = 7;
+        xmin = 0;
+        xmax = 7;
+    }  
+    else if(hname == "met"){
+        hname_latex = "p_{T}^{miss}";
+        nbins = 40;
+        xmin = 0;
+        xmax = 1000;
+    }
+    else if(hname == "Ht"){
+        hname_latex = "H_{T}";
+        nbins = 100;
+        xmin = 0;
+        xmax = 2000;
+    }
+    else{
+        cout << "hname not recognized" << endl;
+        return 1;
+    }
+
+    // create a vector of histograms and legend entries
+    vector<TH1D*> hists;
+    vector<string> legend_entries;
+    for(int i = 0; i < rootFiles.size(); i++){
+        TFile* f = new TFile(rootFiles[i].data());
+        TH1D* h = (TH1D*)f->Get(hname.data());
+        hists.push_back(h);
+
+        // create a vector of legend entries from the root file names
+        // remove the path and the .root extension
+        // and remove 'hists_' or 'output_'
+        string entry = rootFiles[i];
+        entry.erase(0, entry.find_last_of("/")+1);
+        entry.erase(entry.find_last_of("."), entry.size());
+        if(entry.find("hists_") != string::npos){
+            entry.erase(0, entry.find("hists_")+6);
+        }
+        else if(entry.find("output_") != string::npos){
+            entry.erase(0, entry.find("output_")+7);
+        }
+        legend_entries.push_back(entry);
+    }
+
+    // sort the hists by integral
+    // smallest integral on top
+    sort(hists.begin(), hists.end(), compareHists);
+    
+    // get the legend entries in the same order as the histograms
+    vector<string> legend_entries_sorted;
+    for(int i = 0; i < hists.size(); i++){
+        for(int j = 0; j < rootFiles.size(); j++){
+            if(hists[i] == (TH1D*)TFile(rootFiles[j].data()).Get(hname.data())){
+                legend_entries_sorted.push_back(legend_entries[j]);
+            }
+        }
+    }
+
+    // create a vector of colors hopefully larger than the number of histograms
+    vector<int> colors;
+    colors.push_back(kRed);
+    colors.push_back(kBlue);
+    colors.push_back(kGreen);
+    colors.push_back(kOrange);
+    colors.push_back(kMagenta);
+    colors.push_back(kCyan);
+    colors.push_back(kYellow);
+    colors.push_back(kGray);
+    colors.push_back(kViolet);
+    colors.push_back(kTeal);
+    colors.push_back(kAzure);
+    colors.push_back(kSpring);
+    colors.push_back(kPink);
+    colors.push_back(kBlack);
+    colors.push_back(kWhite);
+
+    // stack the histograms and make a plot
+    TCanvas *c = new TCanvas(hname.data(),hname.data(), 1000,800);
+    c->cd();
+    THStack *hs = new THStack(hname.data(),hname.data());
+    TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+    for(int i = 0; i < hists.size(); i++){
+        // there may be more hists than colors
+        // so use the modulo operator to cycle through the colors
+        hists[i]->SetLineColor(colors[i%colors.size()]);
+        hists[i]->SetFillColor(colors[i%colors.size()]);
+        hists[i]->SetLineWidth(2);
+        hists[i]->SetFillStyle(3001);
+        hs->Add(hists[i]);
+        leg->AddEntry(hists[i], legend_entries[i].data(), "f");
+    }
+    hs->Draw("hist");
+    hs->GetXaxis()->SetTitle(hname_latex.data());
+    hs->GetYaxis()->SetTitle("Events");
+    leg->Draw();
+    c->SetLogy();
+
+    // save the plot
+    string plotName = plotDir + "/";
+    plotName += hname;
+    plotName += "_stack.pdf";
+    c->SaveAs(plotName.data());
+
+    plotName = plotDir + "/";
+    plotName += hname;
+    plotName += "_stack.png";
+    c->SaveAs(plotName.data());
+
+    // save the stacked histograms to a root file
+    string outfile_name = plotDir + "/";
+    outfile_name += hname;
+    outfile_name += "_stack.root";
+    TFile* f = new TFile(outfile_name.data(), "RECREATE");
+    hs->Write();
+    f->Write();
+    f->Close();
     return 0;
 }
