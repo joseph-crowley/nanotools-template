@@ -262,17 +262,6 @@ bool compareHists(TH1D* h1, TH1D* h2){
 
     // compare the bin contents and errors to see if h1 < h2
     return (h1_integral_norm < h2_integral_norm);
-
-    // TODO: is this the right way to compare two histograms?
-    //// correct for the errors
-    //double h1_integral_norm_err = h1_integral_norm - h1_error_norm;
-    //double h2_integral_norm_err = h2_integral_norm + h2_error_norm;
-    //if(h1_integral_norm_err < h2_integral_norm_err){
-    //    return true;
-    //}
-    //else{
-    //    return false;
-    //}
 }
 
 // Create a macro to stack the histograms and make a plot
@@ -335,17 +324,19 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
 
     // sort the hists by integral
     // smallest integral on top
-    sort(hists.begin(), hists.end(), compareHists);
+    //sort(hists.begin(), hists.end(), compareHists);
     
     // get the legend entries in the same order as the histograms
-    vector<string> legend_entries_sorted;
-    for(int i = 0; i < hists.size(); i++){
-        for(int j = 0; j < rootFiles.size(); j++){
-            if(hists[i] == (TH1D*)TFile(rootFiles[j].data()).Get(hname.data())){
-                legend_entries_sorted.push_back(legend_entries[j]);
-            }
-        }
-    }
+    // Note: this currently does not give the correct order, I think. 
+    // TODO: ask ulascan about doing this correctly
+    //vector<string> legend_entries_sorted;
+    //for(int i = 0; i < hists.size(); i++){
+    //    for(int j = 0; j < rootFiles.size(); j++){
+    //        if(hists[i] == (TH1D*)TFile(rootFiles[j].data()).Get(hname.data())){
+    //            legend_entries_sorted.push_back(legend_entries[j]);
+    //        }
+    //    }
+    //}
 
     // create a vector of colors hopefully larger than the number of histograms
     vector<int> colors;
@@ -362,8 +353,6 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     colors.push_back(kAzure);
     colors.push_back(kSpring);
     colors.push_back(kPink);
-    colors.push_back(kBlack);
-    colors.push_back(kWhite);
 
     // stack the histograms and make a plot
     TCanvas *c = new TCanvas(hname.data(),hname.data(), 1000,800);
@@ -373,18 +362,25 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     for(int i = 0; i < hists.size(); i++){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
-        hists[i]->SetLineColor(colors[i%colors.size()]);
+        // set line color slightly lighter than fill color
         hists[i]->SetFillColor(colors[i%colors.size()]);
-        hists[i]->SetLineWidth(2);
+        hists[i]->SetLineColor(colors[i%colors.size()]+2);
+        hists[i]->SetLineWidth(1);
         hists[i]->SetFillStyle(3001);
         hs->Add(hists[i]);
+    }
+    // fill the legend in reverse order
+    for(int i = hists.size() - 1; i >= 0; i--){
         leg->AddEntry(hists[i], legend_entries[i].data(), "f");
     }
+    hs->SetMinimum(1e-1);
+    hs->SetMaximum(3e5);
     hs->Draw("hist");
     hs->GetXaxis()->SetTitle(hname_latex.data());
     hs->GetYaxis()->SetTitle("Events");
     leg->Draw();
     c->SetLogy();
+
 
     // save the plot
     string plotName = plotDir + "/";
