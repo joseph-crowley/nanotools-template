@@ -269,6 +269,9 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // stack histogram hname from rootFiles, make a plot, save the plot,
     // save the stacked histograms to a root file
 
+    // remove stats box
+    gStyle->SetOptStat(0);
+
     // hname is of the form njet, met, Ht
     // replace this with n_{jet}, p_{T}^{miss}, H_{T}
     // and the number of bins and the range of the histogram
@@ -300,14 +303,29 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     }
 
     // create a vector of histograms and legend entries
+    TH1D* h_data = NULL;
+    string entry_data;
     vector<TH1D*> hists;
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
         TFile* f = new TFile(rootFiles[i].data());
         TH1D* h = (TH1D*)f->Get(hname.data());
-        hists.push_back(h);
 
         // create a vector of legend entries from the root file names
+        
+        // for data
+        // remove the path and the .root extension
+        if (rootFiles[i].find("data") != string::npos){
+            string entry = rootFiles[i];
+            entry.erase(0, entry.find_last_of("/")+1);
+            entry.erase(entry.find_last_of("."), entry.size());
+            h_data = h;
+            entry_data = entry;
+            continue;
+        }
+
+        // for MC
+        hists.push_back(h);
         // remove the path and the .root extension
         // and remove 'hists_' or 'output_'
         string entry = rootFiles[i];
@@ -369,18 +387,30 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         hists[i]->SetFillStyle(3001);
         hs->Add(hists[i]);
     }
-    // fill the legend in reverse order
-    for(int i = hists.size() - 1; i >= 0; i--){
-        leg->AddEntry(hists[i], legend_entries[i].data(), "f");
-    }
+
+    // compute the min and max for hs
     hs->SetMinimum(1e-1);
     hs->SetMaximum(3e5);
     hs->Draw("hist");
     hs->GetXaxis()->SetTitle(hname_latex.data());
     hs->GetYaxis()->SetTitle("Events");
+
+    // fill the legend in reverse order
+    for(int i = hists.size() - 1; i >= 0; i--){
+        leg->AddEntry(hists[i], legend_entries[i].data(), "f");
+    }
+    // data last    
+    leg->AddEntry(h_data, "data", "lep");
+
+    // draw the data histogram
+    h_data->SetMarkerStyle(20);
+    h_data->SetMarkerSize(1.2);
+    h_data->SetLineWidth(2);
+    h_data->SetLineColor(kBlack);
+    h_data->Draw("e1psame");
+
     leg->Draw();
     c->SetLogy();
-
 
     // save the plot
     string plotName = plotDir + "/";
