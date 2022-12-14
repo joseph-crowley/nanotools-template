@@ -515,7 +515,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     delete h_m_lb;
     delete h_m_bb;
 
-
     return 0;
 }
 
@@ -564,31 +563,15 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // stack histogram hname from rootFiles, make a plot, save the plot,
     // save the stacked histograms to a root file
 
-
-    // hname is of the form njet, met, Ht
-    // replace this with n_{jet}, p_{T}^{miss}, H_{T}
-    // and the number of bins and the range of the histogram
-    int nbins = 0;
-    double xmin = 0;
-    double xmax = 0;
     string hname_latex = hname;
     if(hname == "njet"){
         hname_latex = "n_{jet}";
-        nbins = 7;
-        xmin = 0;
-        xmax = 7;
     }  
     else if(hname == "met"){
         hname_latex = "p_{T}^{miss} [GeV]";
-        nbins = 40;
-        xmin = 0;
-        xmax = 1000;
     }
     else if(hname == "Ht"){
         hname_latex = "H_{T} [GeV]";
-        nbins = 100;
-        xmin = 0;
-        xmax = 2000;
     }
     else if(hname == "lep1_pt" || hname == "lep2_pt" ||
             hname == "lep1_eta" || hname == "lep2_eta" ||
@@ -612,28 +595,15 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
             hname_latex += hname[3];
             hname_latex += "}";
         }
-
-        nbins = 40;
-        xmin = 0;
-        xmax = 1000;
     }
     else if(hname == "m_bb"){
         hname_latex = "m_{bb} [GeV]";
-        nbins = 40;
-        xmin = 0;
-        xmax = 1000;
     }
     else if(hname == "m_lb"){
         hname_latex = "m_{lb} [GeV]";
-        nbins = 40;
-        xmin = 0;
-        xmax = 1000;
     }
     else if(hname == "m_ll"){
         hname_latex = "m_{ll} [GeV]";
-        nbins = 40;
-        xmin = 0;
-        xmax = 1000;
     }
     else{
         cout << "hname not recognized" << endl;
@@ -781,5 +751,19 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->Write();
     f->Write();
     f->Close();
+
+    // clean up memory
+    delete c;
+    delete f;
+    delete hs;
+    delete leg;
+    for(int i = 0; i < hists.size(); i++){
+        delete hists[i];
+    }
+    hists.clear();
+    hists_sorted.clear();
+    legend_entries.clear();
+    colors.clear();
+
     return 0;
 }
