@@ -2,7 +2,8 @@
 gROOT->ProcessLine(".L analyze_bjets.C+");
 TChain *ch = new TChain("Events");
 
-std::string plotDir("/home/users/crowley/public_html/tttt_analyze_bjets_mc_Run2_categorized");
+std::string plotDir("/home/users/crowley/public_html/tttt/analyze_bjets_mc_Run2_categorized");
+std::string rootDir("outputs/mc");
 
 // Category TT_2l2nu
 // chain for TT_2l2nu
@@ -686,7 +687,7 @@ chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeR
 chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_2l2nu_99_of_291.root");
 chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_2l2nu_9_of_291.root");
 
-ScanChain(chTT_2l2nu, sample_strTT_2l2nu, plotDir);
+ScanChain(chTT_2l2nu, sample_strTT_2l2nu, plotDir, rootDir);
 
 // Category TT_lnu
 // chain for TT_lnu
@@ -2902,7 +2903,7 @@ chTT_lnu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRat
 chTT_lnu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_lnu_nlo_99_of_953.root");
 chTT_lnu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_lnu_nlo_9_of_953.root");
 
-ScanChain(chTT_lnu, sample_strTT_lnu, plotDir);
+ScanChain(chTT_lnu, sample_strTT_lnu, plotDir, rootDir);
 
 // Category TTV
 // chain for TTV
@@ -3125,7 +3126,7 @@ chTTV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/
 chTTV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TTZ_2l2nu_M_1to10_0_of_2.root");
 chTTV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TTZ_2l2nu_M_1to10_1_of_2.root");
 
-ScanChain(chTTV, sample_strTTV, plotDir);
+ScanChain(chTTV, sample_strTTV, plotDir, rootDir);
 
 
 // Category ST_tW
@@ -3247,7 +3248,7 @@ chST_tW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRate
 chST_tW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/ST_tW_top_5f_NoFullyHadronicDecays_8_of_21.root");
 chST_tW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/ST_tW_top_5f_NoFullyHadronicDecays_9_of_21.root");
 
-ScanChain(chST_tW, sample_strST_tW, plotDir);
+ScanChain(chST_tW, sample_strST_tW, plotDir, rootDir);
 
 // Category WW
 // chain for WW
@@ -3301,7 +3302,7 @@ chWW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/2
 chWW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/qqWW_2l2nu_8_of_17.root");
 chWW->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/qqWW_2l2nu_9_of_17.root");
 
-ScanChain(chWW, sample_strWW, plotDir);
+ScanChain(chWW, sample_strWW, plotDir, rootDir);
 
 // Category ZVV
 // chain for ZVV
@@ -3412,7 +3413,7 @@ chZVV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/
 chZVV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/ZZZ_ext_8_of_14.root");
 chZVV->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/ZZZ_ext_9_of_14.root");
 
-ScanChain(chZVV, sample_strZVV, plotDir);
+ScanChain(chZVV, sample_strZVV, plotDir, rootDir);
 
 // Category Others
 // chain for Others
@@ -7878,7 +7879,7 @@ chOthers->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRat
 chOthers->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/qqZZ_4l_99_of_138.root");
 chOthers->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/qqZZ_4l_9_of_138.root");
 
-ScanChain(chOthers, sample_strOthers, plotDir);
+ScanChain(chOthers, sample_strOthers, plotDir, rootDir);
 
 
 }

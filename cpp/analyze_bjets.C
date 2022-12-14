@@ -47,6 +47,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     TIter fileIter(listOfFiles);
     tqdm bar;
 
+    // remove stats box
+    gStyle->SetOptStat(0);
+
     // make weighted histograms of: 
     /* njet 
      * met
@@ -63,6 +66,22 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     int const Ht_nbin = 100;
     H1(Ht,Ht_nbin,0,1000);
+
+    // leading lepton histograms
+    int const lep1_pt_nbin = 100;
+    int const lep1_eta_nbin = 50;
+    int const lep1_phi_nbin = 32;
+    H1(lep1_pt,lep1_pt_nbin,0,1000);
+    H1(lep1_eta,lep1_eta_nbin,-2.5,2.5);
+    H1(lep1_phi,lep1_phi_nbin,-3.2,3.2);
+
+    // subleading lepton histograms
+    int const lep2_pt_nbin = 100;
+    int const lep2_eta_nbin = 50;
+    int const lep2_phi_nbin = 32;
+    H1(lep2_pt,lep2_pt_nbin,0,1000);
+    H1(lep2_eta,lep2_eta_nbin,-2.5,2.5);
+    H1(lep2_phi,lep2_phi_nbin,-3.2,3.2);
 
     // set up branches
 
@@ -92,9 +111,20 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     ch->SetBranchAddress("jet_is_btagged", &jet_is_btagged);
 //    std::cout << "7" << endl;
 
+    // add lepton variables pt, eta, phi
+    std::vector<float> *lep_pt = 0;
+    ch->SetBranchAddress("lep_pt", &lep_pt);
+
+    std::vector<float> *lep_eta = 0;
+    ch->SetBranchAddress("lep_eta", &lep_eta);
+
+    std::vector<float> *lep_phi = 0;
+    ch->SetBranchAddress("lep_phi", &lep_phi);
+
+//    std::cout << "8" << endl;
+
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event){
-//    std::cout << "8" << endl;
             ch->GetEntry(event);
 //            std::cout << "9" << endl;
 
@@ -124,6 +154,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 //            std::cout << "12" << endl;
             h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
             h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+            h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_weight_triggers_dilepton_matched);
 
     } // Event loop
 
@@ -137,6 +173,18 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_met->SetBinError(met_nbin, std::sqrt(std::pow(h_met->GetBinError(met_nbin+1),2) + std::pow(h_met->GetBinError(met_nbin),2)));
     h_Ht->SetBinContent(Ht_nbin, h_Ht->GetBinContent(Ht_nbin+1) + h_Ht->GetBinContent(Ht_nbin));
     h_Ht->SetBinError(Ht_nbin, std::sqrt(std::pow(h_Ht->GetBinError(Ht_nbin+1),2) + std::pow(h_Ht->GetBinError(Ht_nbin),2)));
+    h_lep1_pt->SetBinContent(lep1_pt_nbin, h_lep1_pt->GetBinContent(lep1_pt_nbin+1) + h_lep1_pt->GetBinContent(lep1_pt_nbin));
+    h_lep1_pt->SetBinError(lep1_pt_nbin, std::sqrt(std::pow(h_lep1_pt->GetBinError(lep1_pt_nbin+1),2) + std::pow(h_lep1_pt->GetBinError(lep1_pt_nbin),2)));
+    h_lep1_eta->SetBinContent(lep1_eta_nbin, h_lep1_eta->GetBinContent(lep1_eta_nbin+1) + h_lep1_eta->GetBinContent(lep1_eta_nbin));
+    h_lep1_eta->SetBinError(lep1_eta_nbin, std::sqrt(std::pow(h_lep1_eta->GetBinError(lep1_eta_nbin+1),2) + std::pow(h_lep1_eta->GetBinError(lep1_eta_nbin),2)));
+    h_lep1_phi->SetBinContent(lep1_phi_nbin, h_lep1_phi->GetBinContent(lep1_phi_nbin+1) + h_lep1_phi->GetBinContent(lep1_phi_nbin));
+    h_lep1_phi->SetBinError(lep1_phi_nbin, std::sqrt(std::pow(h_lep1_phi->GetBinError(lep1_phi_nbin+1),2) + std::pow(h_lep1_phi->GetBinError(lep1_phi_nbin),2)));
+    h_lep2_pt->SetBinContent(lep2_pt_nbin, h_lep2_pt->GetBinContent(lep2_pt_nbin+1) + h_lep2_pt->GetBinContent(lep2_pt_nbin));
+    h_lep2_pt->SetBinError(lep2_pt_nbin, std::sqrt(std::pow(h_lep2_pt->GetBinError(lep2_pt_nbin+1),2) + std::pow(h_lep2_pt->GetBinError(lep2_pt_nbin),2)));
+    h_lep2_eta->SetBinContent(lep2_eta_nbin, h_lep2_eta->GetBinContent(lep2_eta_nbin+1) + h_lep2_eta->GetBinContent(lep2_eta_nbin));
+    h_lep2_eta->SetBinError(lep2_eta_nbin, std::sqrt(std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin+1),2) + std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin),2)));
+    h_lep2_phi->SetBinContent(lep2_phi_nbin, h_lep2_phi->GetBinContent(lep2_phi_nbin+1) + h_lep2_phi->GetBinContent(lep2_phi_nbin));
+    h_lep2_phi->SetBinError(lep2_phi_nbin, std::sqrt(std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin+1),2) + std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin),2)));
 
 //    std::cout << "14" << endl;
     // set overflow bin to 0
@@ -146,6 +194,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_Ht->SetBinError(Ht_nbin+1, 0);
     h_met->SetBinContent(met_nbin+1, 0);
     h_met->SetBinError(met_nbin+1, 0);
+    h_lep1_pt->SetBinContent(lep1_pt_nbin+1, 0);
+    h_lep1_pt->SetBinError(lep1_pt_nbin+1, 0);
+    h_lep1_eta->SetBinContent(lep1_eta_nbin+1, 0);
+    h_lep1_eta->SetBinError(lep1_eta_nbin+1, 0);
+    h_lep1_phi->SetBinContent(lep1_phi_nbin+1, 0);
+    h_lep1_phi->SetBinError(lep1_phi_nbin+1, 0);
+    h_lep2_pt->SetBinContent(lep2_pt_nbin+1, 0);
+    h_lep2_pt->SetBinError(lep2_pt_nbin+1, 0);
+    h_lep2_eta->SetBinContent(lep2_eta_nbin+1, 0);
+    h_lep2_eta->SetBinError(lep2_eta_nbin+1, 0);
+    h_lep2_phi->SetBinContent(lep2_phi_nbin+1, 0);
+    h_lep2_phi->SetBinError(lep2_phi_nbin+1, 0);
+
 //    std::cout << "15" << endl;
 
     bar.finish();
@@ -210,6 +271,115 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     HtPlotName += ".png";
     HtPlot->SaveAs(HtPlotName.data());
 
+    // lep1_pt plot
+    TCanvas *lep1_ptPlot = new TCanvas("p_{T}^{lep1}","p_{T}^{lep1}", 1000,800);
+    lep1_ptPlot->cd();
+    h_lep1_pt->GetXaxis()->SetTitle("p_{T}^{lep1} [GeV]");
+    h_lep1_pt->GetYaxis()->SetTitle("Events");
+    h_lep1_pt->Draw();
+    lep1_ptPlot->SetLogy();
+
+    string lep1_ptPlotName = plotDir + "/lep1_pt_";
+    lep1_ptPlotName += sample_str;
+    lep1_ptPlotName += ".pdf";
+    lep1_ptPlot->SaveAs(lep1_ptPlotName.data());
+
+    lep1_ptPlotName = plotDir + "/lep1_pt_";
+    lep1_ptPlotName += sample_str;
+    lep1_ptPlotName += ".png";
+    lep1_ptPlot->SaveAs(lep1_ptPlotName.data());
+
+    // lep1_eta plot
+    TCanvas *lep1_etaPlot = new TCanvas("#eta^{lep1}","#eta^{lep1}", 1000,800);
+    lep1_etaPlot->cd();
+    h_lep1_eta->GetXaxis()->SetTitle("#eta^{lep1}");
+    h_lep1_eta->GetYaxis()->SetTitle("Events");
+    h_lep1_eta->Draw();
+    lep1_etaPlot->SetLogy();
+
+    string lep1_etaPlotName = plotDir + "/lep1_eta_";
+    lep1_etaPlotName += sample_str;
+    lep1_etaPlotName += ".pdf";
+    lep1_etaPlot->SaveAs(lep1_etaPlotName.data());
+
+    lep1_etaPlotName = plotDir + "/lep1_eta_";
+    lep1_etaPlotName += sample_str;
+    lep1_etaPlotName += ".png";
+    lep1_etaPlot->SaveAs(lep1_etaPlotName.data());
+
+    // lep1_phi plot
+    TCanvas *lep1_phiPlot = new TCanvas("#phi^{lep1}","#phi^{lep1}", 1000,800);
+    lep1_phiPlot->cd();
+    h_lep1_phi->GetXaxis()->SetTitle("#phi^{lep1}");
+    h_lep1_phi->GetYaxis()->SetTitle("Events");
+    h_lep1_phi->Draw();
+    lep1_phiPlot->SetLogy();
+
+    string lep1_phiPlotName = plotDir + "/lep1_phi_";
+    lep1_phiPlotName += sample_str;
+    lep1_phiPlotName += ".pdf";
+    lep1_phiPlot->SaveAs(lep1_phiPlotName.data());
+
+    lep1_phiPlotName = plotDir + "/lep1_phi_";
+    lep1_phiPlotName += sample_str;
+    lep1_phiPlotName += ".png";
+    lep1_phiPlot->SaveAs(lep1_phiPlotName.data());
+
+    // lep2_pt plot
+    TCanvas *lep2_ptPlot = new TCanvas("p_{T}^{lep2}","p_{T}^{lep2}", 1000,800);
+    lep2_ptPlot->cd();
+    h_lep2_pt->GetXaxis()->SetTitle("p_{T}^{lep2} [GeV]");
+    h_lep2_pt->GetYaxis()->SetTitle("Events");
+    h_lep2_pt->Draw();
+    lep2_ptPlot->SetLogy();
+
+    string lep2_ptPlotName = plotDir + "/lep2_pt_";
+    lep2_ptPlotName += sample_str;
+    lep2_ptPlotName += ".pdf";
+    lep2_ptPlot->SaveAs(lep2_ptPlotName.data());
+
+    lep2_ptPlotName = plotDir + "/lep2_pt_";
+    lep2_ptPlotName += sample_str;
+    lep2_ptPlotName += ".png";
+    lep2_ptPlot->SaveAs(lep2_ptPlotName.data());
+
+    // lep2_eta plot
+    TCanvas *lep2_etaPlot = new TCanvas("#eta^{lep2}","#eta^{lep2}", 1000,800); 
+    lep2_etaPlot->cd();
+    h_lep2_eta->GetXaxis()->SetTitle("#eta^{lep2}");
+
+    h_lep2_eta->GetYaxis()->SetTitle("Events");
+    h_lep2_eta->Draw();
+    lep2_etaPlot->SetLogy();
+
+    string lep2_etaPlotName = plotDir + "/lep2_eta_";
+    lep2_etaPlotName += sample_str;
+    lep2_etaPlotName += ".pdf";
+    lep2_etaPlot->SaveAs(lep2_etaPlotName.data());
+
+    lep2_etaPlotName = plotDir + "/lep2_eta_";
+    lep2_etaPlotName += sample_str;
+    lep2_etaPlotName += ".png";
+    lep2_etaPlot->SaveAs(lep2_etaPlotName.data());
+
+    // lep2_phi plot
+    TCanvas *lep2_phiPlot = new TCanvas("#phi^{lep2}","#phi^{lep2}", 1000,800);
+    lep2_phiPlot->cd();
+    h_lep2_phi->GetXaxis()->SetTitle("#phi^{lep2}");
+    h_lep2_phi->GetYaxis()->SetTitle("Events");
+    h_lep2_phi->Draw();
+    lep2_phiPlot->SetLogy();
+
+    string lep2_phiPlotName = plotDir + "/lep2_phi_";
+    lep2_phiPlotName += sample_str;
+    lep2_phiPlotName += ".pdf";
+    lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
+
+    lep2_phiPlotName = plotDir + "/lep2_phi_";
+    lep2_phiPlotName += sample_str;
+    lep2_phiPlotName += ".png";
+    lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
+
 //    std::cout << "20" << endl;
     // save histograms to root file
     string outfile_name = rootDir + "/hists_";
@@ -222,9 +392,28 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 //    std::cout << "22" << endl;
     h_met->Write();
     h_Ht->Write();
+    h_lep1_pt->Write();
+    h_lep1_eta->Write();
+    h_lep1_phi->Write();
+    h_lep2_pt->Write();
+    h_lep2_eta->Write();
+    h_lep2_phi->Write();
 
     f->Write();
     f->Close();
+
+    // clean up memory
+    delete f;
+    delete h_njet;
+    delete h_met;
+    delete h_Ht;
+    delete h_lep1_pt;
+    delete h_lep1_eta;
+    delete h_lep1_phi;
+    delete h_lep2_pt;
+    delete h_lep2_eta;
+    delete h_lep2_phi;
+
     return 0;
 }
 
@@ -269,8 +458,6 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // stack histogram hname from rootFiles, make a plot, save the plot,
     // save the stacked histograms to a root file
 
-    // remove stats box
-    gStyle->SetOptStat(0);
 
     // hname is of the form njet, met, Ht
     // replace this with n_{jet}, p_{T}^{miss}, H_{T}
