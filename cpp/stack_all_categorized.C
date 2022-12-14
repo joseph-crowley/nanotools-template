@@ -21,5 +21,8 @@ stackHists("lep1_phi", rootFiles, plotDir.data());
 stackHists("lep2_pt", rootFiles, plotDir.data());
 stackHists("lep2_eta", rootFiles, plotDir.data());
 stackHists("lep2_phi", rootFiles, plotDir.data());
+stackHists("dilep_pt", rootFiles, plotDir.data());
+stackHists("dilep_eta", rootFiles, plotDir.data());
+stackHists("dilep_phi", rootFiles, plotDir.data());
 
 }

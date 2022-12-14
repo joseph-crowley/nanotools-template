@@ -519,6 +519,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     delete h_lep2_pt;
     delete h_lep2_eta;
     delete h_lep2_phi;
+    //delete h_dilep_m;
+    delete h_dilep_pt;
+    delete h_dilep_eta;
+    delete h_dilep_phi;
+
+
 
     return 0;
 }
@@ -590,10 +596,14 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         xmin = 0;
         xmax = 2000;
     }
-    // lepton hists
     else if(hname == "lep1_pt" || hname == "lep2_pt" ||
             hname == "lep1_eta" || hname == "lep2_eta" ||
             hname == "lep1_phi" || hname == "lep2_phi"){
+        nbins = 40;
+        xmin = 0;
+        xmax = 1000;
+    }
+    else if(hname == "dilep_pt" || hname == "dilep_eta" || hname == "dilep_phi"){
         nbins = 40;
         xmin = 0;
         xmax = 1000;
