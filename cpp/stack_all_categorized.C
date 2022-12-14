@@ -21,6 +21,7 @@ stackHists("lep2_pt", rootFiles, plotDir.data());
 //stackHists("lep1_phi", rootFiles, plotDir.data());
 //stackHists("lep2_eta", rootFiles, plotDir.data());
 //stackHists("lep2_phi", rootFiles, plotDir.data());
+stackHists("pt_ll", rootFiles, plotDir.data());
 stackHists("m_ll", rootFiles, plotDir.data());
 stackHists("m_lb", rootFiles, plotDir.data());
 stackHists("m_bb", rootFiles, plotDir.data());

@@ -42,7 +42,60 @@ struct debugger { template<typename T> debugger& operator , (const T& v) { cerr<
 using namespace std;
 //using namespace tas;
 
+string getHistogramName(string hname){
+    // get the sample name from the root file name
+    // remove the path and the .root extension
+    string hname_latex = "";
+    if(hname == "njet"){
+        hname_latex = "n_{jet}";
+    }  
+    else if(hname == "met"){
+        hname_latex = "p_{T}^{miss} [GeV]";
+    }
+    else if(hname == "Ht"){
+        hname_latex = "H_{T} [GeV]";
+    }
+    else if(hname == "lep1_pt" || hname == "lep2_pt" ||
+            hname == "lep1_eta" || hname == "lep2_eta" ||
+            hname == "lep1_phi" || hname == "lep2_phi"){
+            
+        if(hname.find("pt") != string::npos){
+            hname_latex = "p_{T}";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "} [GeV]";
+        }
+        else if(hname.find("eta") != string::npos){
+            hname_latex = "#eta";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "}";
+        }
+        else if(hname.find("phi") != string::npos){
+            hname_latex = "#phi";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "}";
+        }
+    }
+    else if(hname == "m_bb"){
+        hname_latex = "m_{bb} [GeV]";
+    }
+    else if(hname == "m_lb"){
+        hname_latex = "m_{lb} [GeV]";
+    }
+    else if(hname == "m_ll"){
+        hname_latex = "m_{ll} [GeV]";
+    }
+    else {
+        std::cout << "hname not recognized" << endl;
+    }
+
+    return hname_latex;
+}
 int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
+    std::cout << "Making ratio plot for " << hname << std::endl;
+    string hname_latex = getHistogramName(hname);
     // make a ratio plot
     TH1D* h_ratio = (TH1D*)h_data->Clone("h_ratio");
     // get the pointer for Divide to work
@@ -54,8 +107,10 @@ int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
     h_ratio->SetLineColor(kBlack);
     h_ratio->SetMinimum(0.0);
     h_ratio->SetMaximum(2.0);
-    h_ratio->GetXaxis()->SetTitle("n_{jet}");
+    h_ratio->GetXaxis()->SetTitle(hname_latex.data());
     h_ratio->GetYaxis()->SetTitle("Data/MC");
+    std::cout << "Setting up canvas" << std::endl;
+    std::cout << "Setting up pad1" << std::endl;
 
     // draw the histogram stack in the top pad
     TPad *pad1 = new TPad("pad1","pad1",0,0.3,1,1.0);
@@ -103,6 +158,7 @@ int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
     tex->SetTextSize(0.03);
     tex->DrawLatex(0.15,0.85,"Channel: e#mu");
 
+    std::cout << "Setting up pad2" << std::endl;
     // draw the ratio plot to fit in the bottom pad
     // place it a bit lower than the bottom of the pad
     TPad *pad2 = new TPad("pad2","pad2",0,0.0,1,0.3);
@@ -118,6 +174,7 @@ int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
     line->SetLineWidth(2);
     line->Draw("same");
 
+    std::cout << "Add pads to canvas" << std::endl;
     // add the pads to the canvas and draw it
     TCanvas *c = new TCanvas("c","c",800,800);
     c->cd();
@@ -158,6 +215,9 @@ int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
     f->Close();
 
     // clean up memory
+    delete hs;
+    delete h_data;
+    delete h_mc;
     delete c;
     delete h_ratio;
     delete line;
@@ -214,6 +274,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     H1(lep2_eta,lep2_eta_nbin,-2.5,2.5);
     H1(lep2_phi,lep2_phi_nbin,-3.2,3.2);
     
+    // dilepton histograms
+
+    int const pt_ll_nbin = 100;
+    H1(pt_ll,pt_ll_nbin,0,1000);
+
     // invariant mass histograms
     int const m_ll_nbin = 40;
     int const m_lb_nbin = 40;
@@ -313,6 +378,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
                 lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
                 TLorentzVector dilep = lep1 + lep2;
                 h_m_ll->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
+                h_pt_ll->Fill(dilep.Pt(), event_wgt * event_weight_triggers_dilepton_matched);
                 h_m_lb->Fill(min_mlb, event_wgt * event_weight_triggers_dilepton_matched);
                 h_m_bb->Fill(min_mbb, event_wgt * event_weight_triggers_dilepton_matched);
             }
@@ -344,6 +410,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->SetBinError(lep2_eta_nbin, std::sqrt(std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin+1),2) + std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin),2)));
     h_lep2_phi->SetBinContent(lep2_phi_nbin, h_lep2_phi->GetBinContent(lep2_phi_nbin+1) + h_lep2_phi->GetBinContent(lep2_phi_nbin));
     h_lep2_phi->SetBinError(lep2_phi_nbin, std::sqrt(std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin+1),2) + std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin),2)));
+    h_pt_ll->SetBinContent(pt_ll_nbin, h_pt_ll->GetBinContent(pt_ll_nbin+1) + h_pt_ll->GetBinContent(pt_ll_nbin));
+    h_pt_ll->SetBinError(pt_ll_nbin, std::sqrt(std::pow(h_pt_ll->GetBinError(pt_ll_nbin+1),2) + std::pow(h_pt_ll->GetBinError(pt_ll_nbin),2)));
     h_m_ll->SetBinContent(m_ll_nbin, h_m_ll->GetBinContent(m_ll_nbin+1) + h_m_ll->GetBinContent(m_ll_nbin));
     h_m_ll->SetBinError(m_ll_nbin, std::sqrt(std::pow(h_m_ll->GetBinError(m_ll_nbin+1),2) + std::pow(h_m_ll->GetBinError(m_ll_nbin),2)));
     h_m_lb->SetBinContent(m_lb_nbin, h_m_lb->GetBinContent(m_lb_nbin+1) + h_m_lb->GetBinContent(m_lb_nbin));
@@ -372,6 +440,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->SetBinError(lep2_eta_nbin+1, 0);
     h_lep2_phi->SetBinContent(lep2_phi_nbin+1, 0);
     h_lep2_phi->SetBinError(lep2_phi_nbin+1, 0);
+    h_pt_ll->SetBinContent(pt_ll_nbin+1, 0);
+    h_pt_ll->SetBinError(pt_ll_nbin+1, 0);  
     h_m_ll->SetBinContent(m_ll_nbin+1, 0);
     h_m_ll->SetBinError(m_ll_nbin+1, 0);  
     h_m_lb->SetBinContent(m_lb_nbin+1, 0);
@@ -552,6 +622,23 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     lep2_phiPlotName += ".png";
     lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
 
+    TCanvas *pt_llPlot = new TCanvas("p_{T}^{ll}","p_{T}^{ll}", 1000,800);
+    pt_llPlot->cd();
+    h_pt_ll->GetXaxis()->SetTitle("p_{T}^{ll} [GeV]");
+    h_pt_ll->GetYaxis()->SetTitle("Events");
+    h_pt_ll->Draw();
+    pt_llPlot->SetLogy();
+            
+    string pt_llPlotName = plotDir + "/pt_ll_";
+    pt_llPlotName += sample_str;
+    pt_llPlotName += ".pdf";
+    pt_llPlot->SaveAs(pt_llPlotName.data());
+
+    pt_llPlotName = plotDir + "/pt_ll_";
+    pt_llPlotName += sample_str;
+    pt_llPlotName += ".png";
+    pt_llPlot->SaveAs(pt_llPlotName.data());
+
     TCanvas *m_llPlot = new TCanvas("m_{ll}","m_{ll}", 1000,800);
     m_llPlot->cd();
     h_m_ll->GetXaxis()->SetTitle("m_{ll} [GeV]");
@@ -623,6 +710,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->Write();
     h_lep2_phi->Write();
 
+    h_pt_ll->Write();
     h_m_ll->Write();
     h_m_lb->Write();
     h_m_bb->Write();
@@ -641,6 +729,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     delete h_lep2_pt;
     delete h_lep2_eta;
     delete h_lep2_phi;
+    delete h_pt_ll;
     delete h_m_ll;
     delete h_m_lb;
     delete h_m_bb;
@@ -693,52 +782,8 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // stack histogram hname from rootFiles, make a plot, save the plot,
     // save the stacked histograms to a root file
 
-    string hname_latex = hname;
-    if(hname == "njet"){
-        hname_latex = "n_{jet}";
-    }  
-    else if(hname == "met"){
-        hname_latex = "p_{T}^{miss} [GeV]";
-    }
-    else if(hname == "Ht"){
-        hname_latex = "H_{T} [GeV]";
-    }
-    else if(hname == "lep1_pt" || hname == "lep2_pt" ||
-            hname == "lep1_eta" || hname == "lep2_eta" ||
-            hname == "lep1_phi" || hname == "lep2_phi"){
-            
-        if(hname.find("pt") != string::npos){
-            hname_latex = "p_{T}";
-            hname_latex += "^{l";
-            hname_latex += hname[3];
-            hname_latex += "} [GeV]";
-        }
-        else if(hname.find("eta") != string::npos){
-            hname_latex = "#eta";
-            hname_latex += "^{l";
-            hname_latex += hname[3];
-            hname_latex += "}";
-        }
-        else if(hname.find("phi") != string::npos){
-            hname_latex = "#phi";
-            hname_latex += "^{l";
-            hname_latex += hname[3];
-            hname_latex += "}";
-        }
-    }
-    else if(hname == "m_bb"){
-        hname_latex = "m_{bb} [GeV]";
-    }
-    else if(hname == "m_lb"){
-        hname_latex = "m_{lb} [GeV]";
-    }
-    else if(hname == "m_ll"){
-        hname_latex = "m_{ll} [GeV]";
-    }
-    else{
-        cout << "hname not recognized" << endl;
-        return 1;
-    }
+    // get the histogram name in latex format
+    string hname_latex = getHistogramName(hname);
 
     // create a vector of histograms and legend entries
     // separate data and Others
@@ -884,7 +929,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     f->Write();
     f->Close();
 
-    makeRatioPlot(hs, h_data, hname, plotDir);
+    //makeRatioPlot(hs, h_data, hname, plotDir);
 
     // clean up memory
     delete c;
