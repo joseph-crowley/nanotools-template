@@ -9,7 +9,9 @@
 #include "TCanvas.h"
 #include "THStack.h"
 #include "TStyle.h"
+#include "TLine.h"
 #include "TLegend.h"
+#include "TLatex.h"
 #include "TLorentzVector.h"
 
 //#include "../NanoCORE/Nano.h"
@@ -39,6 +41,134 @@ struct debugger { template<typename T> debugger& operator , (const T& v) { cerr<
 
 using namespace std;
 //using namespace tas;
+
+int makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir){
+    // make a ratio plot
+    TH1D* h_ratio = (TH1D*)h_data->Clone("h_ratio");
+    // get the pointer for Divide to work
+    TH1D* h_mc = (TH1D*)hs->GetStack()->Last();
+    h_ratio->Divide(h_mc);
+    h_ratio->SetMarkerStyle(20);
+    h_ratio->SetMarkerSize(1.2);
+    h_ratio->SetLineWidth(2);
+    h_ratio->SetLineColor(kBlack);
+    h_ratio->SetMinimum(0.0);
+    h_ratio->SetMaximum(2.0);
+    h_ratio->GetXaxis()->SetTitle("n_{jet}");
+    h_ratio->GetYaxis()->SetTitle("Data/MC");
+
+    // draw the histogram stack in the top pad
+    TPad *pad1 = new TPad("pad1","pad1",0,0.3,1,1.0);
+    // make some room for the ratio plot
+    pad1->SetTopMargin(0.05);
+    pad1->SetBottomMargin(0.0);
+    pad1->Draw();
+    pad1->cd();
+    hs->SetMaximum(hs->GetMaximum() * 1.5);
+    hs->SetMinimum(0.0);
+    hs->Draw("hist");
+    h_data->Draw("e1p same");
+
+    // draw the CMS logo
+    TLatex *tex = new TLatex();
+    tex->SetNDC();
+    tex->SetTextFont(42);
+    tex->SetTextSize(0.04);
+    //tex->DrawLatex(0.15,0.96,"CMS Preliminary");
+    tex->DrawLatex(0.7,0.96,"#sqrt{s} = 13 TeV");
+
+    //// draw the luminosity
+    //tex->SetTextSize(0.03);
+    //tex->DrawLatex(0.7,0.92,Form("L = %.1f fb^{-1}", lumi));
+
+    // draw the integrated luminosity
+    tex->SetTextSize(0.03);
+    tex->DrawLatex(0.7,0.88,Form("N_{events} = %.0f", h_data->Integral()));
+
+    // make the cut string
+    vector<string> cuts;
+    cuts.push_back("N_{jets} p_{T} #geq 40");
+    cuts.push_back("N_{b-jets} = 2 (Medium WP)");
+    cuts.push_back("N_{lep} = 2");
+    cuts.push_back("p_{T}^{Miss} #geq 50");
+    string cut_string = "Cut: ";
+    for(int i = 0; i < cuts.size(); i++){
+        cut_string += cuts[i];
+        if(i != cuts.size() - 1) cut_string += ", ";
+    }
+    tex->SetTextSize(0.03);
+    tex->DrawLatex(0.15,0.92,cut_string.data());
+    
+    // draw the channel
+    tex->SetTextSize(0.03);
+    tex->DrawLatex(0.15,0.85,"Channel: e#mu");
+
+    // draw the ratio plot to fit in the bottom pad
+    // place it a bit lower than the bottom of the pad
+    TPad *pad2 = new TPad("pad2","pad2",0,0.0,1,0.3);
+    pad2->SetTopMargin(0.0);
+    pad2->SetBottomMargin(0.3);
+    pad2->Draw();
+    pad2->cd();
+    h_ratio->Draw("e1p");
+
+    // draw a line at 1
+    TLine *line = new TLine(h_ratio->GetXaxis()->GetXmin(), 1.0, h_ratio->GetXaxis()->GetXmax(), 1.0);
+    line->SetLineColor(kBlack);
+    line->SetLineWidth(2);
+    line->Draw("same");
+
+    // add the pads to the canvas and draw it
+    TCanvas *c = new TCanvas("c","c",800,800);
+    c->cd();
+    // place the pads in the right place
+    // and make them the right size
+    pad1->SetPad(0.0,0.3,1.0,1.0);
+    pad2->SetPad(0.0,0.0,1.0,0.3);
+    pad1->Draw();
+    pad2->Draw();
+    c->Draw();
+
+    // draw the legend
+    TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->AddEntry(h_data, "Data", "lep");
+    leg->AddEntry(h_mc, "MC", "f");
+    leg->Draw();
+
+    // save the plot with both the histogram and the ratio plot
+    string plot_name = plotDir + "/";
+    plot_name += hname;
+    plot_name += "_ratio.pdf";
+    c->SaveAs(plot_name.data());
+
+    plot_name = plotDir + "/";
+    plot_name += hname;
+    plot_name += "_ratio.png";
+    c->SaveAs(plot_name.data());
+
+    // save the ratio plot to a root file
+    string outfile_name = plotDir + "/";
+    outfile_name += hname;
+    outfile_name += "_ratio.root";
+    TFile* f = new TFile(outfile_name.data(), "RECREATE");
+    h_ratio->Write();
+    f->Write();
+    f->Close();
+
+    // clean up memory
+    delete c;
+    delete h_ratio;
+    delete line;
+    delete tex;
+    delete leg;
+    delete pad1;
+    delete pad2;
+    delete f;
+
+    return 0;
+}
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int nEventsTotal = 0;
@@ -732,6 +862,8 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     leg->Draw();
     c->SetLogy();
 
+
+
     // save the plot
     string plotName = plotDir + "/";
     plotName += hname;
@@ -751,6 +883,8 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->Write();
     f->Write();
     f->Close();
+
+    makeRatioPlot(hs, h_data, hname, plotDir);
 
     // clean up memory
     delete c;
