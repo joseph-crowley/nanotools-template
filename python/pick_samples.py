@@ -45,6 +45,8 @@ def main():
     periods = ['2016_NonAPV','2016_APV', '2017','2018']
     categories = list(sample_map_inv.keys())
 
+    # where to send the plots
+    plotDir = '/home/users/crowley/public_html/test'
     out = dict().fromkeys(categories,'')
     out['Others'] = ''
     ## only need the following if separating categories into files
@@ -100,7 +102,7 @@ def main():
     print(f'chosen samples: \n{json.dumps(samples,indent=4)}')
     
     # write a line for a doAll script 
-    basedir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC'
+    basedir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221201_tt_bkg'
 
     # for sample in samples:
     #     samp = sample.split('/')[-1]
@@ -144,14 +146,14 @@ def main():
         out[cat] += '\n'
         out[cat] += f'// files for {samp} {period}\n'
 
-        basestr = f'ch{samp_noext}->Add("'+basedir
+        basestr = f'chData->Add("'+basedir
         files_kept = files_to_use(samp, files, period)
         #print(files_kept)
         for f in files_kept:
         	out[cat] += '/'.join([basestr, f+'");\n']);
         out[cat] += '\n'
         #if '2018' in period:
-    out["Data"] += f'ScanChain(chData, sample_strData, "{rootDir}");\n\n'
+    out["Data"] += f'ScanChain(chData, sample_strData, "{plotDir}", "{rootDir}");\n\n'
 
 
     with open(f'../cpp/doAll_data_Run2_t.C','w') as fi:
