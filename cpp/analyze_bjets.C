@@ -484,6 +484,14 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         xmin = 0;
         xmax = 2000;
     }
+    // lepton hists
+    else if(hname == "lep1_pt" || hname == "lep2_pt" ||
+            hname == "lep1_eta" || hname == "lep2_eta" ||
+            hname == "lep1_phi" || hname == "lep2_phi"){
+        nbins = 40;
+        xmin = 0;
+        xmax = 1000;
+    }
     else{
         cout << "hname not recognized" << endl;
         return 1;

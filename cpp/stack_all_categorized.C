@@ -10,7 +10,7 @@ rootFiles.push_back("outputs/mc/hists_ST_tW.root");
 rootFiles.push_back("outputs/mc/hists_TTV.root");
 rootFiles.push_back("outputs/mc/hists_TT_lnu.root");
 rootFiles.push_back("outputs/mc/hists_TT_2l2nu.root");
-rootFiles.push_back("outputs/data/hists_Data.root");
+rootFiles.push_back("outputs/data/hists_Data_Run2.root");
 
 stackHists("njet", rootFiles, plotDir.data());
 stackHists("met", rootFiles, plotDir.data());
