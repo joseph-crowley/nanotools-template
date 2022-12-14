@@ -532,8 +532,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 // define a compareHists function for comparing the histograms 
 // from different samples by integrating over the bins
 // and making a plot
-bool compareHists(TH1D* h1, TH1D* h2){
-
+// takes a two <pair<int, TH1D*> > as input 
+bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
+    // get the histograms
+    TH1D* h1 = p1.second;
+    TH1D* h2 = p2.second;
+    
     // get the number of bins
     int nbins = h1->GetNbinsX();
     // get the bin width
@@ -614,8 +618,11 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     }
 
     // create a vector of histograms and legend entries
+    // separate data and Others
     TH1D* h_data = NULL;
     string entry_data;
+    TH1D* h_Others = NULL;
+    string entry_Others;
     vector<TH1D*> hists;
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
@@ -634,9 +641,17 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
             entry_data = entry;
             continue;
         }
+        // for Others
+        if (rootFiles[i].find("Others") != string::npos){
+            string entry = rootFiles[i];
+            entry.erase(0, entry.find_last_of("/")+1);
+            entry.erase(entry.find_last_of("."), entry.size());
+            h_Others = h;
+            entry_Others = entry;
+            continue;
+        }
 
         // for MC
-        hists.push_back(h);
         // remove the path and the .root extension
         // and remove 'hists_' or 'output_'
         string entry = rootFiles[i];
@@ -648,56 +663,54 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         else if(entry.find("output_") != string::npos){
             entry.erase(0, entry.find("output_")+7);
         }
+
+        hists.push_back(h);
         legend_entries.push_back(entry);
     }
 
     // sort the hists by integral
     // smallest integral on top
-    //sort(hists.begin(), hists.end(), compareHists);
-    
-    // get the legend entries in the same order as the histograms
-    // Note: this currently does not give the correct order, I think. 
-    // TODO: ask ulascan about doing this correctly
-    //vector<string> legend_entries_sorted;
-    //for(int i = 0; i < hists.size(); i++){
-    //    for(int j = 0; j < rootFiles.size(); j++){
-    //        if(hists[i] == (TH1D*)TFile(rootFiles[j].data()).Get(hname.data())){
-    //            legend_entries_sorted.push_back(legend_entries[j]);
-    //        }
-    //    }
-    //}
+    // keep track of the indices of the sorted histograms
+    // by using a vector of pairs
+    vector<pair<int, TH1D*> > hists_sorted;
+    for(int i = 0; i < hists.size(); i++){
+        hists_sorted.push_back(make_pair(i, hists[i]));
+    }
+    sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
 
     // create a vector of colors hopefully larger than the number of histograms
     vector<int> colors;
     colors.push_back(kRed);
-    colors.push_back(kBlue);
+    colors.push_back(kViolet);
     colors.push_back(kGreen);
     colors.push_back(kOrange);
     colors.push_back(kMagenta);
     colors.push_back(kCyan);
-    colors.push_back(kYellow);
-    colors.push_back(kGray);
-    colors.push_back(kViolet);
-    colors.push_back(kTeal);
-    colors.push_back(kAzure);
-    colors.push_back(kSpring);
-    colors.push_back(kPink);
 
     // stack the histograms and make a plot
     TCanvas *c = new TCanvas(hname.data(),hname.data(), 1000,800);
     c->cd();
     THStack *hs = new THStack(hname.data(),hname.data());
     TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
-    for(int i = 0; i < hists.size(); i++){
+
+    // add the Others histogram first
+    h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
+    h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
+    h_Others->SetLineWidth(1);
+    h_Others->SetFillStyle(3001);
+    hs->Add(h_Others);
+
+    for(int i = 0; i < hists_sorted.size(); i++){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
         // set line color slightly lighter than fill color
-        hists[i]->SetFillColor(colors[i%colors.size()]);
-        hists[i]->SetLineColor(colors[i%colors.size()]+2);
-        hists[i]->SetLineWidth(1);
-        hists[i]->SetFillStyle(3001);
-        hs->Add(hists[i]);
+        hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
+        hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
+        hists_sorted[i].second->SetLineWidth(1);
+        hists_sorted[i].second->SetFillStyle(3001);
+        hs->Add(hists_sorted[i].second);
     }
+
 
     // compute the min and max for hs
     hs->SetMinimum(1e-1);
@@ -707,9 +720,12 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->GetYaxis()->SetTitle("Events");
 
     // fill the legend in reverse order
-    for(int i = hists.size() - 1; i >= 0; i--){
-        leg->AddEntry(hists[i], legend_entries[i].data(), "f");
+    for(int i = hists_sorted.size() - 1; i >= 0; i--){
+        leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
     }
+    // then Others
+    leg->AddEntry(h_Others, "Others", "f");
+
     // data last    
     leg->AddEntry(h_data, "data", "lep");
 
