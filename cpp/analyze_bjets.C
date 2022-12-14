@@ -84,15 +84,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     H1(lep2_eta,lep2_eta_nbin,-2.5,2.5);
     H1(lep2_phi,lep2_phi_nbin,-3.2,3.2);
     
-    // dilepton histograms
-    int const dilep_pt_nbin = 100;
-    int const dilep_eta_nbin = 50;
-    int const dilep_phi_nbin = 32;
-    int const dilep_m_nbin = 32;
-    H1(dilep_pt,dilep_pt_nbin,0,1000);
-    H1(dilep_eta,dilep_eta_nbin,-2.5,2.5);
-    H1(dilep_phi,dilep_phi_nbin,-3.2,3.2);
-    H1(dilep_m,dilep_m_nbin,0,1000);
+    // invariant mass histograms
+    int const m_ll_nbin = 40;
+    int const m_lb_nbin = 40;
+    int const m_bb_nbin = 40;
+    H1(m_ll,m_ll_nbin,0,1000);
+    H1(m_lb,m_lb_nbin,0,1000);
+    H1(m_bb,m_bb_nbin,0,1000);
 
     // set up branches
 
@@ -135,6 +133,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     std::vector<float> *lep_mass = 0;
     ch->SetBranchAddress("lep_mass", &lep_mass);
 
+    float min_mbb;
+    ch->SetBranchAddress("min_mbb", &min_mbb);
+
+    float min_mlb;
+    ch->SetBranchAddress("min_mlb", &min_mlb);
+
 //    std::cout << "8" << endl;
 
     // Event loop
@@ -172,17 +176,15 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
                 h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_weight_triggers_dilepton_matched);
 
                 // dilepton hists
-                h_dilep_pt->Fill((lep_pt->at(0)+lep_pt->at(1)), event_wgt * event_weight_triggers_dilepton_matched);
-                h_dilep_eta->Fill((lep_eta->at(0)+lep_eta->at(1)), event_wgt * event_weight_triggers_dilepton_matched);
-                h_dilep_phi->Fill((lep_phi->at(0)+lep_phi->at(1)), event_wgt * event_weight_triggers_dilepton_matched);
-
                 // get the mll from the TLorentzVector of the two leptons
                 TLorentzVector lep1;
                 lep1.SetPtEtaPhiM(lep_pt->at(0), lep_eta->at(0), lep_phi->at(0), lep_mass->at(0));
                 TLorentzVector lep2;
                 lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
                 TLorentzVector dilep = lep1 + lep2;
-                h_dilep_m->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
+                h_m_ll->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
+                h_m_lb->Fill(min_mlb, event_wgt * event_weight_triggers_dilepton_matched);
+                h_m_bb->Fill(min_mbb, event_wgt * event_weight_triggers_dilepton_matched);
             }
 //            std::cout << "12" << endl;
             h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
@@ -212,14 +214,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->SetBinError(lep2_eta_nbin, std::sqrt(std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin+1),2) + std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin),2)));
     h_lep2_phi->SetBinContent(lep2_phi_nbin, h_lep2_phi->GetBinContent(lep2_phi_nbin+1) + h_lep2_phi->GetBinContent(lep2_phi_nbin));
     h_lep2_phi->SetBinError(lep2_phi_nbin, std::sqrt(std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin+1),2) + std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin),2)));
-    h_dilep_pt->SetBinContent(dilep_pt_nbin, h_dilep_pt->GetBinContent(dilep_pt_nbin+1) + h_dilep_pt->GetBinContent(dilep_pt_nbin));
-    h_dilep_pt->SetBinError(dilep_pt_nbin, std::sqrt(std::pow(h_dilep_pt->GetBinError(dilep_pt_nbin+1),2) + std::pow(h_dilep_pt->GetBinError(dilep_pt_nbin),2)));
-    h_dilep_eta->SetBinContent(dilep_eta_nbin, h_dilep_eta->GetBinContent(dilep_eta_nbin+1) + h_dilep_eta->GetBinContent(dilep_eta_nbin));
-    h_dilep_eta->SetBinError(dilep_eta_nbin, std::sqrt(std::pow(h_dilep_eta->GetBinError(dilep_eta_nbin+1),2) + std::pow(h_dilep_eta->GetBinError(dilep_eta_nbin),2)));
-    h_dilep_phi->SetBinContent(dilep_phi_nbin, h_dilep_phi->GetBinContent(dilep_phi_nbin+1) + h_dilep_phi->GetBinContent(dilep_phi_nbin));
-    h_dilep_phi->SetBinError(dilep_phi_nbin, std::sqrt(std::pow(h_dilep_phi->GetBinError(dilep_phi_nbin+1),2) + std::pow(h_dilep_phi->GetBinError(dilep_phi_nbin),2)));
-    h_dilep_m->SetBinContent(dilep_m_nbin, h_dilep_m->GetBinContent(dilep_m_nbin+1) + h_dilep_m->GetBinContent(dilep_m_nbin));
-    h_dilep_m->SetBinError(dilep_m_nbin, std::sqrt(std::pow(h_dilep_m->GetBinError(dilep_m_nbin+1),2) + std::pow(h_dilep_m->GetBinError(dilep_m_nbin),2)));
+    h_m_ll->SetBinContent(m_ll_nbin, h_m_ll->GetBinContent(m_ll_nbin+1) + h_m_ll->GetBinContent(m_ll_nbin));
+    h_m_ll->SetBinError(m_ll_nbin, std::sqrt(std::pow(h_m_ll->GetBinError(m_ll_nbin+1),2) + std::pow(h_m_ll->GetBinError(m_ll_nbin),2)));
+    h_m_lb->SetBinContent(m_lb_nbin, h_m_lb->GetBinContent(m_lb_nbin+1) + h_m_lb->GetBinContent(m_lb_nbin));
+    h_m_lb->SetBinError(m_lb_nbin, std::sqrt(std::pow(h_m_lb->GetBinError(m_lb_nbin+1),2) + std::pow(h_m_lb->GetBinError(m_lb_nbin),2)));
+    h_m_bb->SetBinContent(m_bb_nbin, h_m_bb->GetBinContent(m_bb_nbin+1) + h_m_bb->GetBinContent(m_bb_nbin));
+    h_m_bb->SetBinError(m_bb_nbin, std::sqrt(std::pow(h_m_bb->GetBinError(m_bb_nbin+1),2) + std::pow(h_m_bb->GetBinError(m_bb_nbin),2)));
+
 
 //    std::cout << "14" << endl;
     // set overflow bin to 0
@@ -241,14 +242,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->SetBinError(lep2_eta_nbin+1, 0);
     h_lep2_phi->SetBinContent(lep2_phi_nbin+1, 0);
     h_lep2_phi->SetBinError(lep2_phi_nbin+1, 0);
-    h_dilep_pt->SetBinContent(dilep_pt_nbin+1, 0);
-    h_dilep_pt->SetBinError(dilep_pt_nbin+1, 0);
-    h_dilep_eta->SetBinContent(dilep_eta_nbin+1, 0);
-    h_dilep_eta->SetBinError(dilep_eta_nbin+1, 0);
-    h_dilep_phi->SetBinContent(dilep_phi_nbin+1, 0);
-    h_dilep_phi->SetBinError(dilep_phi_nbin+1, 0);
-    h_dilep_m->SetBinContent(dilep_m_nbin+1, 0);
-    h_dilep_m->SetBinError(dilep_m_nbin+1, 0);  
+    h_m_ll->SetBinContent(m_ll_nbin+1, 0);
+    h_m_ll->SetBinError(m_ll_nbin+1, 0);  
+    h_m_lb->SetBinContent(m_lb_nbin+1, 0);
+    h_m_lb->SetBinError(m_lb_nbin+1, 0);
+    h_m_bb->SetBinContent(m_bb_nbin+1, 0);
+    h_m_bb->SetBinError(m_bb_nbin+1, 0);
 
 //    std::cout << "15" << endl;
 
@@ -423,74 +422,57 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     lep2_phiPlotName += ".png";
     lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
 
-    // dilep plots
-    TCanvas *dilep_massPlot = new TCanvas("m_{ll}","m_{ll}", 1000,800);
-    dilep_massPlot->cd();
-    h_dilep_m->GetXaxis()->SetTitle("m_{ll} [GeV]");
-    h_dilep_m->GetYaxis()->SetTitle("Events");
-    h_dilep_m->Draw();
-    dilep_massPlot->SetLogy();
+    TCanvas *m_llPlot = new TCanvas("m_{ll}","m_{ll}", 1000,800);
+    m_llPlot->cd();
+    h_m_ll->GetXaxis()->SetTitle("m_{ll} [GeV]");
+    h_m_ll->GetYaxis()->SetTitle("Events");
+    h_m_ll->Draw();
+    m_llPlot->SetLogy();
             
-    string dilep_massPlotName = plotDir + "/dilep_mass_";
-    dilep_massPlotName += sample_str;
-    dilep_massPlotName += ".pdf";
-    dilep_massPlot->SaveAs(dilep_massPlotName.data());
+    string m_llPlotName = plotDir + "/m_ll_";
+    m_llPlotName += sample_str;
+    m_llPlotName += ".pdf";
+    m_llPlot->SaveAs(m_llPlotName.data());
 
-    dilep_massPlotName = plotDir + "/dilep_mass_";
-    dilep_massPlotName += sample_str;
-    dilep_massPlotName += ".png";
-    dilep_massPlot->SaveAs(dilep_massPlotName.data());
+    m_llPlotName = plotDir + "/m_ll_";
+    m_llPlotName += sample_str;
+    m_llPlotName += ".png";
+    m_llPlot->SaveAs(m_llPlotName.data());
 
-    TCanvas *dilep_ptPlot = new TCanvas("p_{T}^{ll}","p_{T}^{ll}", 1000,800);
-    dilep_ptPlot->cd();
-    h_dilep_pt->GetXaxis()->SetTitle("p_{T}^{ll} [GeV]");
-    h_dilep_pt->GetYaxis()->SetTitle("Events");
-    h_dilep_pt->Draw();
-    dilep_ptPlot->SetLogy();
+    TCanvas *m_lbPlot = new TCanvas("m_{lb}","m_{lb}", 1000,800);
+    m_lbPlot->cd();
+    h_m_lb->GetXaxis()->SetTitle("m_{lb} [GeV]");
+    h_m_lb->GetYaxis()->SetTitle("Events");
+    h_m_lb->Draw();
+    m_lbPlot->SetLogy();
 
-    string dilep_ptPlotName = plotDir + "/dilep_pt_";
-    dilep_ptPlotName += sample_str;
-    dilep_ptPlotName += ".pdf";
-    dilep_ptPlot->SaveAs(dilep_ptPlotName.data());
+    string m_lbPlotName = plotDir + "/m_lb_";
+    m_lbPlotName += sample_str;
+    m_lbPlotName += ".pdf";
+    m_lbPlot->SaveAs(m_lbPlotName.data());
 
-    dilep_ptPlotName = plotDir + "/dilep_pt_";
-    dilep_ptPlotName += sample_str;
-    dilep_ptPlotName += ".png";
-    dilep_ptPlot->SaveAs(dilep_ptPlotName.data());
+    m_lbPlotName = plotDir + "/m_lb_";
+    m_lbPlotName += sample_str;
+    m_lbPlotName += ".png";
+    m_lbPlot->SaveAs(m_lbPlotName.data());
 
-    TCanvas *dilep_etaPlot = new TCanvas("#eta^{ll}","#eta^{ll}", 1000,800);
-    dilep_etaPlot->cd();
-    h_dilep_eta->GetXaxis()->SetTitle("#eta^{ll}");
-    h_dilep_eta->GetYaxis()->SetTitle("Events");
-    h_dilep_eta->Draw();
-    dilep_etaPlot->SetLogy();
+    TCanvas *m_bbPlot = new TCanvas("m_{bb}","m_{bb}", 1000,800);
+    m_bbPlot->cd();
+    h_m_bb->GetXaxis()->SetTitle("m_{bb} [GeV]");
+    h_m_bb->GetYaxis()->SetTitle("Events");
+    h_m_bb->Draw();
+    m_bbPlot->SetLogy();
 
-    string dilep_etaPlotName = plotDir + "/dilep_eta_";
-    dilep_etaPlotName += sample_str;
-    dilep_etaPlotName += ".pdf";
-    dilep_etaPlot->SaveAs(dilep_etaPlotName.data());
+    string m_bbPlotName = plotDir + "/m_bb_";
+    m_bbPlotName += sample_str;
+    m_bbPlotName += ".pdf";
+    m_bbPlot->SaveAs(m_bbPlotName.data());
 
-    dilep_etaPlotName = plotDir + "/dilep_eta_";
-    dilep_etaPlotName += sample_str;
-    dilep_etaPlotName += ".png";
-    dilep_etaPlot->SaveAs(dilep_etaPlotName.data());
+    m_bbPlotName = plotDir + "/m_bb_";
+    m_bbPlotName += sample_str;
+    m_bbPlotName += ".png";
+    m_bbPlot->SaveAs(m_bbPlotName.data());
 
-    TCanvas *dilep_phiPlot = new TCanvas("#phi^{ll}","#phi^{ll}", 1000,800);    
-    dilep_phiPlot->cd();
-    h_dilep_phi->GetXaxis()->SetTitle("#phi^{ll}");
-    h_dilep_phi->GetYaxis()->SetTitle("Events");
-    h_dilep_phi->Draw();
-    dilep_phiPlot->SetLogy();
-
-    string dilep_phiPlotName = plotDir + "/dilep_phi_";
-    dilep_phiPlotName += sample_str;
-    dilep_phiPlotName += ".pdf";
-    dilep_phiPlot->SaveAs(dilep_phiPlotName.data());
-
-    dilep_phiPlotName = plotDir + "/dilep_phi_";
-    dilep_phiPlotName += sample_str;
-    dilep_phiPlotName += ".png";
-    dilep_phiPlot->SaveAs(dilep_phiPlotName.data());
 
 //    std::cout << "20" << endl;
     // save histograms to root file
@@ -511,10 +493,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_lep2_eta->Write();
     h_lep2_phi->Write();
 
-    //h_dilep_m->Write();
-    h_dilep_pt->Write();
-    h_dilep_eta->Write();
-    h_dilep_phi->Write();
+    h_m_ll->Write();
+    h_m_lb->Write();
+    h_m_bb->Write();
 
     f->Write();
     f->Close();
@@ -530,10 +511,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     delete h_lep2_pt;
     delete h_lep2_eta;
     delete h_lep2_phi;
-    delete h_dilep_m;
-    delete h_dilep_pt;
-    delete h_dilep_eta;
-    delete h_dilep_phi;
+    delete h_m_ll;
+    delete h_m_lb;
+    delete h_m_bb;
+
 
     return 0;
 }
@@ -598,13 +579,13 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         xmax = 7;
     }  
     else if(hname == "met"){
-        hname_latex = "p_{T}^{miss}";
+        hname_latex = "p_{T}^{miss} [GeV]";
         nbins = 40;
         xmin = 0;
         xmax = 1000;
     }
     else if(hname == "Ht"){
-        hname_latex = "H_{T}";
+        hname_latex = "H_{T} [GeV]";
         nbins = 100;
         xmin = 0;
         xmax = 2000;
@@ -612,11 +593,44 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     else if(hname == "lep1_pt" || hname == "lep2_pt" ||
             hname == "lep1_eta" || hname == "lep2_eta" ||
             hname == "lep1_phi" || hname == "lep2_phi"){
+            
+        if(hname.find("pt") != string::npos){
+            hname_latex = "p_{T}";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "} [GeV]";
+        }
+        else if(hname.find("eta") != string::npos){
+            hname_latex = "#eta";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "}";
+        }
+        else if(hname.find("phi") != string::npos){
+            hname_latex = "#phi";
+            hname_latex += "^{l";
+            hname_latex += hname[3];
+            hname_latex += "}";
+        }
+
         nbins = 40;
         xmin = 0;
         xmax = 1000;
     }
-    else if(hname == "dilep_pt" || hname == "dilep_eta" || hname == "dilep_phi"){
+    else if(hname == "m_bb"){
+        hname_latex = "m_{bb} [GeV]";
+        nbins = 40;
+        xmin = 0;
+        xmax = 1000;
+    }
+    else if(hname == "m_lb"){
+        hname_latex = "m_{lb} [GeV]";
+        nbins = 40;
+        xmin = 0;
+        xmax = 1000;
+    }
+    else if(hname == "m_ll"){
+        hname_latex = "m_{ll} [GeV]";
         nbins = 40;
         xmin = 0;
         xmax = 1000;

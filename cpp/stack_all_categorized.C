@@ -16,13 +16,13 @@ stackHists("njet", rootFiles, plotDir.data());
 stackHists("met", rootFiles, plotDir.data());
 stackHists("Ht", rootFiles, plotDir.data());
 stackHists("lep1_pt", rootFiles, plotDir.data());
-stackHists("lep1_eta", rootFiles, plotDir.data());
-stackHists("lep1_phi", rootFiles, plotDir.data());
 stackHists("lep2_pt", rootFiles, plotDir.data());
-stackHists("lep2_eta", rootFiles, plotDir.data());
-stackHists("lep2_phi", rootFiles, plotDir.data());
-stackHists("dilep_pt", rootFiles, plotDir.data());
-stackHists("dilep_eta", rootFiles, plotDir.data());
-stackHists("dilep_phi", rootFiles, plotDir.data());
+//stackHists("lep1_eta", rootFiles, plotDir.data());
+//stackHists("lep1_phi", rootFiles, plotDir.data());
+//stackHists("lep2_eta", rootFiles, plotDir.data());
+//stackHists("lep2_phi", rootFiles, plotDir.data());
+stackHists("m_ll", rootFiles, plotDir.data());
+stackHists("m_lb", rootFiles, plotDir.data());
+stackHists("m_bb", rootFiles, plotDir.data());
 
 }
