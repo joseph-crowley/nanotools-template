@@ -688,7 +688,7 @@ chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeR
 chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_2l2nu_99_of_291.root");
 chTT_2l2nu->Add("/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221130_tt_bkg_MC/2018/TT_2l2nu_9_of_291.root");
 
-,canChain(chTT_2l2nu, sample_strTT_2l2nu, plotDir);
+ScanChain(chTT_2l2nu, sample_strTT_2l2nu, plotDir);
 
 
 // Category TT_lnu
