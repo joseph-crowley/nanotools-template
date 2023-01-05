@@ -114,7 +114,7 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
 }
 
 
-void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
+void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // make a ratio plot of the data/MC in the bottom pad
   // and a stacked histogram with data overlayed on the top pad
 
@@ -150,7 +150,7 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   tex->DrawLatex(0.7, 0.88, Form("N_{events} = %.0f", h_data->Integral()));
 
   // get the last histogram in the stack (i.e. the MC histogram)
-  TH1D* h_mc = (TH1D*)hs->GetStack()->Last();
+  TH1F* h_mc = (TH1F*)hs->GetStack()->Last();
 
   // create a legend
   TLegend *legend = new TLegend(0.7, 0.8, 0.9, 0.9);
@@ -181,7 +181,7 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   // make a ratio plot
   pad2->Draw();
   pad2->cd();
-  TH1D* h_ratio = (TH1D*)h_data->Clone("h_ratio");
+  TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
   h_ratio->Divide(h_mc);
   h_ratio->SetMarkerStyle(20);
   h_ratio->SetMarkerSize(1.2);
@@ -355,11 +355,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     }
 
 //    std::cout << "13" << endl;
-    std::vector<TH1D*> histograms{&h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
+    std::vector<TH1F*> histograms{&h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
     std::vector<int> nbins{njet_nbin, met_nbin, Ht_nbin, lep1_pt_nbin, lep1_eta_nbin, lep1_phi_nbin, lep2_pt_nbin, lep2_eta_nbin, lep2_phi_nbin};
     
     for (int i = 0; i < histograms.size(); ++i) {
-      TH1D* histogram = histograms[i];
+      TH1F* histogram = histograms[i];
       int nbin = nbins[i];
       histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
       histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1),2) + std::pow(histogram->GetBinError(nbin),2)));
@@ -435,11 +435,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 // define a compareHists function for comparing the histograms 
 // from different samples by integrating over the bins
 // and making a plot
-// takes a two <pair<int, TH1D*> > as input 
-bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
+// takes a two <pair<int, TH1F*> > as input 
+bool compareHists(pair<int, TH1F*> p1, pair<int, TH1F*> p2){
     // get the histograms
-    TH1D* h1 = p1.second;
-    TH1D* h2 = p2.second;
+    TH1F* h1 = p1.second;
+    TH1F* h2 = p2.second;
     
     // get the number of bins
     int nbins = h1->GetNbinsX();
@@ -482,15 +482,15 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
 
     // create a vector of histograms and legend entries
     // separate data and Others
-    TH1D* h_data = NULL;
+    TH1F* h_data = NULL;
     string entry_data;
-    TH1D* h_Others = NULL;
+    TH1F* h_Others = NULL;
     string entry_Others;
-    vector<TH1D*> hists;
+    vector<TH1F*> hists;
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
         TFile* f = new TFile(rootFiles[i].data());
-        TH1D* h = (TH1D*)f->Get(hname.data());
+        TH1F* h = (TH1F*)f->Get(hname.data());
 
         // create a vector of legend entries from the root file names
         
@@ -535,7 +535,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // smallest integral on top
     // keep track of the indices of the sorted histograms
     // by using a vector of pairs
-    vector<pair<int, TH1D*> > hists_sorted;
+    vector<pair<int, TH1F*> > hists_sorted;
     for(int i = 0; i < hists.size(); i++){
         hists_sorted.push_back(make_pair(i, hists[i]));
     }
