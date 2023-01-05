@@ -355,17 +355,17 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     }
 
 //    std::cout << "13" << endl;
-    vector<pair<TH1F*, int>> histograms_and_nbins{
-      {&h_njet, njet_nbin},
-      {&h_met, met_nbin},
-      {&h_Ht, Ht_nbin},
-      {&h_lep1_pt, lep1_pt_nbin},
-      {&h_lep1_eta, lep1_eta_nbin},
-      {&h_lep1_phi, lep1_phi_nbin},
-      {&h_lep2_pt, lep2_pt_nbin},
-      {&h_lep2_eta, lep2_eta_nbin},
-      {&h_lep2_phi, lep2_phi_nbin}
-    };
+
+    vector<pair<TH1F*, int>> histograms_and_nbins;
+    histograms_and_nbins.emplace_back(&h_njet, njet_nbin);
+    histograms_and_nbins.emplace_back(&h_met, met_nbin);
+    histograms_and_nbins.emplace_back(&h_Ht, Ht_nbin);
+    histograms_and_nbins.emplace_back(&h_lep1_pt, lep1_pt_nbin);
+    histograms_and_nbins.emplace_back(&h_lep1_eta, lep1_eta_nbin);
+    histograms_and_nbins.emplace_back(&h_lep1_phi, lep1_phi_nbin);
+    histograms_and_nbins.emplace_back(&h_lep2_pt, lep2_pt_nbin);
+    histograms_and_nbins.emplace_back(&h_lep2_eta, lep2_eta_nbin);
+    histograms_and_nbins.emplace_back(&h_lep2_phi, lep2_phi_nbin);
     
     for (const auto& [histogram, nbin] : histograms_and_nbins) {
       histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
