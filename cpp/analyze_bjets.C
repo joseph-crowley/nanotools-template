@@ -93,6 +93,27 @@ string getHistogramName(string hname){
 
     return hname_latex;
 }
+
+void plotVariable(string varName, TH1F* h_var, string sample_str) {
+  TCanvas *varPlot = new TCanvas(varName.c_str(), varName.c_str(), 1000,800);
+  varPlot->cd();
+  h_var->GetXaxis()->SetTitle(varName.c_str());
+  h_var->GetYaxis()->SetTitle("Events");
+  h_var->Draw();
+  varPlot->SetLogy();
+  
+  string varPlotName = plotDir + "/" + varName + "_";
+  varPlotName += sample_str;
+  varPlotName += ".pdf";
+  varPlot->SaveAs(varPlotName.data());
+
+  varPlotName = plotDir + "/" + varName + "_";
+  varPlotName += sample_str;
+  varPlotName += ".png";
+  varPlot->SaveAs(varPlotName.data());
+}
+
+
 void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   // make a ratio plot of the data/MC in the bottom pad
   // and a stacked histogram with data overlayed on the top pad
@@ -288,7 +309,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     // Event loop
     // Declare variables outside of the event loop
     Long64_t nEventsTotal = 0;
-    ProgressBar bar(ch->GetEntries());
     
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event) {
@@ -357,242 +377,20 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     bar.finish();
 //    std::cout << "16" << endl;
 
-    // make plots
-    
-    // njet plot
-    TCanvas *njetPlot = new TCanvas("njet","njet", 1000,800);
-    njetPlot->cd();
-    h_njet->GetXaxis()->SetTitle("n_{jet}");
-    h_njet->GetYaxis()->SetTitle("Events");
-    h_njet->Draw();
-    njetPlot->SetLogy();
-//    std::cout << "17" << endl;
-
-    string njetPlotName = plotDir + "/njet_";
-    njetPlotName += sample_str;
-    njetPlotName += ".pdf";
-    njetPlot->SaveAs(njetPlotName.data());
-//    std::cout << "18" << endl;
-    
-    njetPlotName = plotDir + "/njet_";
-    njetPlotName += sample_str;
-    njetPlotName += ".png";
-    njetPlot->SaveAs(njetPlotName.data());
-
-//    std::cout << "19" << endl;
-    // met plot
-    TCanvas *metPlot = new TCanvas("p_{T}^{miss}","p_{T}^{miss}", 1000,800);
-    metPlot->cd();
-    h_met->GetXaxis()->SetTitle("p_{T}^{miss}");
-    h_met->GetYaxis()->SetTitle("Events");
-    h_met->Draw();
-    metPlot->SetLogy();
-
-    string metPlotName = plotDir + "/met_";
-    metPlotName += sample_str;
-    metPlotName += ".pdf";
-    metPlot->SaveAs(metPlotName.data());
-
-    metPlotName = plotDir + "/met_";
-    metPlotName += sample_str;
-    metPlotName += ".png";
-    metPlot->SaveAs(metPlotName.data());
-        
-    // Ht plot
-    TCanvas *HtPlot = new TCanvas("Ht","Ht", 1000,800);
-    HtPlot->cd();
-    h_Ht->GetXaxis()->SetTitle("H_{T} [GeV]");
-    h_Ht->GetYaxis()->SetTitle("Events");
-    h_Ht->Draw();
-    HtPlot->SetLogy();
-
-    string HtPlotName = plotDir + "/Ht_";
-    HtPlotName += sample_str;
-    HtPlotName += ".pdf";
-    HtPlot->SaveAs(HtPlotName.data());
-
-    HtPlotName = plotDir + "/Ht_";
-    HtPlotName += sample_str;
-    HtPlotName += ".png";
-    HtPlot->SaveAs(HtPlotName.data());
-
-    // lep1_pt plot
-    TCanvas *lep1_ptPlot = new TCanvas("p_{T}^{lep1}","p_{T}^{lep1}", 1000,800);
-    lep1_ptPlot->cd();
-    h_lep1_pt->GetXaxis()->SetTitle("p_{T}^{lep1} [GeV]");
-    h_lep1_pt->GetYaxis()->SetTitle("Events");
-    h_lep1_pt->Draw();
-    lep1_ptPlot->SetLogy();
-
-    string lep1_ptPlotName = plotDir + "/lep1_pt_";
-    lep1_ptPlotName += sample_str;
-    lep1_ptPlotName += ".pdf";
-    lep1_ptPlot->SaveAs(lep1_ptPlotName.data());
-
-    lep1_ptPlotName = plotDir + "/lep1_pt_";
-    lep1_ptPlotName += sample_str;
-    lep1_ptPlotName += ".png";
-    lep1_ptPlot->SaveAs(lep1_ptPlotName.data());
-
-    // lep1_eta plot
-    TCanvas *lep1_etaPlot = new TCanvas("#eta^{lep1}","#eta^{lep1}", 1000,800);
-    lep1_etaPlot->cd();
-    h_lep1_eta->GetXaxis()->SetTitle("#eta^{lep1}");
-    h_lep1_eta->GetYaxis()->SetTitle("Events");
-    h_lep1_eta->Draw();
-    lep1_etaPlot->SetLogy();
-
-    string lep1_etaPlotName = plotDir + "/lep1_eta_";
-    lep1_etaPlotName += sample_str;
-    lep1_etaPlotName += ".pdf";
-    lep1_etaPlot->SaveAs(lep1_etaPlotName.data());
-
-    lep1_etaPlotName = plotDir + "/lep1_eta_";
-    lep1_etaPlotName += sample_str;
-    lep1_etaPlotName += ".png";
-    lep1_etaPlot->SaveAs(lep1_etaPlotName.data());
-
-    // lep1_phi plot
-    TCanvas *lep1_phiPlot = new TCanvas("#phi^{lep1}","#phi^{lep1}", 1000,800);
-    lep1_phiPlot->cd();
-    h_lep1_phi->GetXaxis()->SetTitle("#phi^{lep1}");
-    h_lep1_phi->GetYaxis()->SetTitle("Events");
-    h_lep1_phi->Draw();
-    lep1_phiPlot->SetLogy();
-
-    string lep1_phiPlotName = plotDir + "/lep1_phi_";
-    lep1_phiPlotName += sample_str;
-    lep1_phiPlotName += ".pdf";
-    lep1_phiPlot->SaveAs(lep1_phiPlotName.data());
-
-    lep1_phiPlotName = plotDir + "/lep1_phi_";
-    lep1_phiPlotName += sample_str;
-    lep1_phiPlotName += ".png";
-    lep1_phiPlot->SaveAs(lep1_phiPlotName.data());
-
-    // lep2_pt plot
-    TCanvas *lep2_ptPlot = new TCanvas("p_{T}^{lep2}","p_{T}^{lep2}", 1000,800);
-    lep2_ptPlot->cd();
-    h_lep2_pt->GetXaxis()->SetTitle("p_{T}^{lep2} [GeV]");
-    h_lep2_pt->GetYaxis()->SetTitle("Events");
-    h_lep2_pt->Draw();
-    lep2_ptPlot->SetLogy();
-
-    string lep2_ptPlotName = plotDir + "/lep2_pt_";
-    lep2_ptPlotName += sample_str;
-    lep2_ptPlotName += ".pdf";
-    lep2_ptPlot->SaveAs(lep2_ptPlotName.data());
-
-    lep2_ptPlotName = plotDir + "/lep2_pt_";
-    lep2_ptPlotName += sample_str;
-    lep2_ptPlotName += ".png";
-    lep2_ptPlot->SaveAs(lep2_ptPlotName.data());
-
-    // lep2_eta plot
-    TCanvas *lep2_etaPlot = new TCanvas("#eta^{lep2}","#eta^{lep2}", 1000,800); 
-    lep2_etaPlot->cd();
-    h_lep2_eta->GetXaxis()->SetTitle("#eta^{lep2}");
-
-    h_lep2_eta->GetYaxis()->SetTitle("Events");
-    h_lep2_eta->Draw();
-    lep2_etaPlot->SetLogy();
-
-    string lep2_etaPlotName = plotDir + "/lep2_eta_";
-    lep2_etaPlotName += sample_str;
-    lep2_etaPlotName += ".pdf";
-    lep2_etaPlot->SaveAs(lep2_etaPlotName.data());
-
-    lep2_etaPlotName = plotDir + "/lep2_eta_";
-    lep2_etaPlotName += sample_str;
-    lep2_etaPlotName += ".png";
-    lep2_etaPlot->SaveAs(lep2_etaPlotName.data());
-
-    // lep2_phi plot
-    TCanvas *lep2_phiPlot = new TCanvas("#phi^{lep2}","#phi^{lep2}", 1000,800);
-    lep2_phiPlot->cd();
-    h_lep2_phi->GetXaxis()->SetTitle("#phi^{lep2}");
-    h_lep2_phi->GetYaxis()->SetTitle("Events");
-    h_lep2_phi->Draw();
-    lep2_phiPlot->SetLogy();
-
-    string lep2_phiPlotName = plotDir + "/lep2_phi_";
-    lep2_phiPlotName += sample_str;
-    lep2_phiPlotName += ".pdf";
-    lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
-
-    lep2_phiPlotName = plotDir + "/lep2_phi_";
-    lep2_phiPlotName += sample_str;
-    lep2_phiPlotName += ".png";
-    lep2_phiPlot->SaveAs(lep2_phiPlotName.data());
-
-    TCanvas *pt_llPlot = new TCanvas("p_{T}^{ll}","p_{T}^{ll}", 1000,800);
-    pt_llPlot->cd();
-    h_pt_ll->GetXaxis()->SetTitle("p_{T}^{ll} [GeV]");
-    h_pt_ll->GetYaxis()->SetTitle("Events");
-    h_pt_ll->Draw();
-    pt_llPlot->SetLogy();
-            
-    string pt_llPlotName = plotDir + "/pt_ll_";
-    pt_llPlotName += sample_str;
-    pt_llPlotName += ".pdf";
-    pt_llPlot->SaveAs(pt_llPlotName.data());
-
-    pt_llPlotName = plotDir + "/pt_ll_";
-    pt_llPlotName += sample_str;
-    pt_llPlotName += ".png";
-    pt_llPlot->SaveAs(pt_llPlotName.data());
-
-    TCanvas *m_llPlot = new TCanvas("m_{ll}","m_{ll}", 1000,800);
-    m_llPlot->cd();
-    h_m_ll->GetXaxis()->SetTitle("m_{ll} [GeV]");
-    h_m_ll->GetYaxis()->SetTitle("Events");
-    h_m_ll->Draw();
-    m_llPlot->SetLogy();
-            
-    string m_llPlotName = plotDir + "/m_ll_";
-    m_llPlotName += sample_str;
-    m_llPlotName += ".pdf";
-    m_llPlot->SaveAs(m_llPlotName.data());
-
-    m_llPlotName = plotDir + "/m_ll_";
-    m_llPlotName += sample_str;
-    m_llPlotName += ".png";
-    m_llPlot->SaveAs(m_llPlotName.data());
-
-    TCanvas *m_lbPlot = new TCanvas("m_{lb}","m_{lb}", 1000,800);
-    m_lbPlot->cd();
-    h_m_lb->GetXaxis()->SetTitle("m_{lb} [GeV]");
-    h_m_lb->GetYaxis()->SetTitle("Events");
-    h_m_lb->Draw();
-    m_lbPlot->SetLogy();
-
-    string m_lbPlotName = plotDir + "/m_lb_";
-    m_lbPlotName += sample_str;
-    m_lbPlotName += ".pdf";
-    m_lbPlot->SaveAs(m_lbPlotName.data());
-
-    m_lbPlotName = plotDir + "/m_lb_";
-    m_lbPlotName += sample_str;
-    m_lbPlotName += ".png";
-    m_lbPlot->SaveAs(m_lbPlotName.data());
-
-    TCanvas *m_bbPlot = new TCanvas("m_{bb}","m_{bb}", 1000,800);
-    m_bbPlot->cd();
-    h_m_bb->GetXaxis()->SetTitle("m_{bb} [GeV]");
-    h_m_bb->GetYaxis()->SetTitle("Events");
-    h_m_bb->Draw();
-    m_bbPlot->SetLogy();
-
-    string m_bbPlotName = plotDir + "/m_bb_";
-    m_bbPlotName += sample_str;
-    m_bbPlotName += ".pdf";
-    m_bbPlot->SaveAs(m_bbPlotName.data());
-
-    m_bbPlotName = plotDir + "/m_bb_";
-    m_bbPlotName += sample_str;
-    m_bbPlotName += ".png";
-    m_bbPlot->SaveAs(m_bbPlotName.data());
-
+    // save histograms as png, pdf, and root files
+    plotVariable("njet", h_njet, sample_str);
+    plotVariable("p_{T}^{miss}", h_met, sample_str);
+    plotVariable("H_{T}", h_Ht, sample_str);
+    plotVariable("p_{T}^{lep1}", h_lep1_pt, sample_str);
+    plotVariable("#eta^{lep1}", h_lep1_eta, sample_str);
+    plotVariable("#phi^{lep1}", h_lep1_phi, sample_str);
+    plotVariable("p_{T}^{lep2}", h_lep2_pt, sample_str);
+    plotVariable("#eta^{lep2}", h_lep2_eta, sample_str);
+    plotVariable("#phi^{lep2}", h_lep2_phi, sample_str);
+    plotVariable("p_{T}^{ll}", h_pt_ll, sample_str);
+    plotVariable("M_{ll}", h_m_ll, sample_str);
+    plotVariable("M_{lb}", h_m_lb, sample_str);
+    plotVariable("M_{bb}", h_m_bb, sample_str);
 
 //    std::cout << "20" << endl;
     // save histograms to root file
