@@ -357,7 +357,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 //    std::cout << "13" << endl;
 
     const int num_histograms = 9;
-    TH1F* histograms[num_histograms] = {&h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
+    TH1F* histograms[num_histograms] = {h_njet, h_met, h_Ht, h_lep1_pt, h_lep1_eta, h_lep1_phi, h_lep2_pt, h_lep2_eta, h_lep2_phi};
     int nbins[num_histograms] = {njet_nbin, met_nbin, Ht_nbin, lep1_pt_nbin, lep1_eta_nbin, lep1_phi_nbin, lep2_pt_nbin, lep2_eta_nbin, lep2_phi_nbin};
     
     for (int i = 0; i < num_histograms; i++) {
