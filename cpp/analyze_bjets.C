@@ -128,6 +128,9 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   tex->SetTextSize(0.03);
   tex->DrawLatex(0.7, 0.88, Form("N_{events} = %.0f", h_data->Integral()));
 
+  // get the last histogram in the stack (i.e. the MC histogram)
+  TH1D* h_mc = (TH1D*)hs->GetStack()->Last();
+
   // create a legend
   TLegend *legend = new TLegend(0.7, 0.8, 0.9, 0.9);
   legend->SetFillColor(0);
@@ -156,8 +159,6 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   pad2->Draw();
   pad2->cd();
   TH1D* h_ratio = (TH1D*)h_data->Clone("h_ratio");
-  // get the pointer for Divide to work
-  TH1D* h_mc = (TH1D*)hs->GetStack()->Last();
   h_ratio->Divide(h_mc);
   h_ratio->SetMarkerStyle(20);
   h_ratio->SetMarkerSize(1.2);
