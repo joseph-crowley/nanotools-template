@@ -155,6 +155,8 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
   tex->SetTextSize(0.03);
   tex->DrawLatex(0.15, 0.85, "Channel: e#mu");
 
+  string hname_latex = getHistogramName(hname);
+
   // make a ratio plot
   pad2->Draw();
   pad2->cd();
