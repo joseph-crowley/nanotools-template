@@ -355,12 +355,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     }
 
 //    std::cout << "13" << endl;
-    std::vector<TH1F*> histograms{&h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
-    std::vector<int> nbins{njet_nbin, met_nbin, Ht_nbin, lep1_pt_nbin, lep1_eta_nbin, lep1_phi_nbin, lep2_pt_nbin, lep2_eta_nbin, lep2_phi_nbin};
+    vector<pair<TH1F*, int>> histograms_and_nbins{
+      {&h_njet, njet_nbin},
+      {&h_met, met_nbin},
+      {&h_Ht, Ht_nbin},
+      {&h_lep1_pt, lep1_pt_nbin},
+      {&h_lep1_eta, lep1_eta_nbin},
+      {&h_lep1_phi, lep1_phi_nbin},
+      {&h_lep2_pt, lep2_pt_nbin},
+      {&h_lep2_eta, lep2_eta_nbin},
+      {&h_lep2_phi, lep2_phi_nbin}
+    };
     
-    for (int i = 0; i < histograms.size(); ++i) {
-      TH1F* histogram = histograms[i];
-      int nbin = nbins[i];
+    for (const auto& [histogram, nbin] : histograms_and_nbins) {
       histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
       histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1),2) + std::pow(histogram->GetBinError(nbin),2)));
     }
