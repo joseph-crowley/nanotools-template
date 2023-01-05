@@ -10,11 +10,17 @@ cd /cvmfs/cms.cern.ch/slc7_amd64_gcc900/cms/cmssw/CMSSW_12_2_0/ ; cmsenv ; cd -
 voms-proxy-init --rfc --voms cms -valid 192:00
 cd nanotools-template/NanoCORE
 make clean all 
+cd ..
 ```
 
-Then run the example:
+### note about using ivy:
 ```
-cd ../cpp
+eval $(./setup.sh env)
+```
+
+## Then run the example:
+```
+cd cpp
 root -l -b -q doAll.C
 ```
 

@@ -1,6 +1,6 @@
 {
+gROOT->ProcessLine(".x loadLib.C");
 gROOT->ProcessLine(".L analyze_bjets.C+");
-
 
 std::string plotDir("/home/users/crowley/public_html/tttt/analyze_bjets_stacked_2023_01_04");
 vector<string> rootFiles;
