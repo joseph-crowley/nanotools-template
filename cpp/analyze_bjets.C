@@ -94,7 +94,7 @@ string getHistogramName(string hname){
     return hname_latex;
 }
 
-void plotVariable(string varName, TH1F* h_var, string sample_str) {
+void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir) {
   TCanvas *varPlot = new TCanvas(varName.c_str(), varName.c_str(), 1000,800);
   varPlot->cd();
   h_var->GetXaxis()->SetTitle(varName.c_str());
@@ -378,19 +378,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 //    std::cout << "16" << endl;
 
     // save histograms as png, pdf, and root files
-    plotVariable("njet", h_njet, sample_str);
-    plotVariable("p_{T}^{miss}", h_met, sample_str);
-    plotVariable("H_{T}", h_Ht, sample_str);
-    plotVariable("p_{T}^{lep1}", h_lep1_pt, sample_str);
-    plotVariable("#eta^{lep1}", h_lep1_eta, sample_str);
-    plotVariable("#phi^{lep1}", h_lep1_phi, sample_str);
-    plotVariable("p_{T}^{lep2}", h_lep2_pt, sample_str);
-    plotVariable("#eta^{lep2}", h_lep2_eta, sample_str);
-    plotVariable("#phi^{lep2}", h_lep2_phi, sample_str);
-    plotVariable("p_{T}^{ll}", h_pt_ll, sample_str);
-    plotVariable("M_{ll}", h_m_ll, sample_str);
-    plotVariable("M_{lb}", h_m_lb, sample_str);
-    plotVariable("M_{bb}", h_m_bb, sample_str);
+    plotVariable("njet", h_njet, sample_str, plotDir);
+    plotVariable("p_{T}^{miss}", h_met, sample_str, plotDir);
+    plotVariable("H_{T}", h_Ht, sample_str, plotDir);
+    plotVariable("p_{T}^{lep1}", h_lep1_pt, sample_str, plotDir);
+    plotVariable("#eta^{lep1}", h_lep1_eta, sample_str, plotDir);
+    plotVariable("#phi^{lep1}", h_lep1_phi, sample_str, plotDir);
+    plotVariable("p_{T}^{lep2}", h_lep2_pt, sample_str, plotDir);
+    plotVariable("#eta^{lep2}", h_lep2_eta, sample_str, plotDir);
+    plotVariable("#phi^{lep2}", h_lep2_phi, sample_str, plotDir);
+    plotVariable("p_{T}^{ll}", h_pt_ll, sample_str, plotDir);
+    plotVariable("M_{ll}", h_m_ll, sample_str, plotDir);
+    plotVariable("M_{lb}", h_m_lb, sample_str, plotDir);
+    plotVariable("M_{bb}", h_m_bb, sample_str, plotDir);
 
 //    std::cout << "20" << endl;
     // save histograms to root file
