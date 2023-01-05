@@ -283,120 +283,76 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     float min_mlb;
     ch->SetBranchAddress("min_mlb", &min_mlb);
 
-//    std::cout << "8" << endl;
-
+    // Declare variables outside of the event loop
+    Long64_t nEventsTotal = 0;
+    ProgressBar bar(ch->GetEntries());
+    
     // Event loop
-    for (Long64_t event = 0; event < ch->GetEntries(); ++event){
-            ch->GetEntry(event);
-//            std::cout << "9" << endl;
-
-            // progress bar
-            nEventsTotal++;
-            bar.progress(nEventsTotal, nEventsChain);
-	    
-//            std::cout << "10" << endl;
-            // iterate over jets and count number of non-btagged jets with pt > 40 GeV
-            // and calculate Ht
-            int njet_ct = 0;
-            float Ht = 0;
-            for (unsigned int i = 0; i < njet; i++){
-                auto const& is_btagged = jet_is_btagged->at(i);
-                auto const& pt = jet_pt->at(i);
-                float const pt_threshold = (is_btagged ? 25. : 40.);
-                if (pt>pt_threshold) Ht += pt;
-                if (!is_btagged) njet_ct++;
-            }
-
-//            std::cout << "11" << endl;
-            // fill histograms
-            // keep the full MET dist, but only plot njet for MET>50GeV
-            if (PFMET_pt_final>50.){
-                h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_weight_triggers_dilepton_matched);
-                h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_weight_triggers_dilepton_matched);
-
-                // dilepton hists
-                // get the mll from the TLorentzVector of the two leptons
-                TLorentzVector lep1;
-                lep1.SetPtEtaPhiM(lep_pt->at(0), lep_eta->at(0), lep_phi->at(0), lep_mass->at(0));
-                TLorentzVector lep2;
-                lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
-                TLorentzVector dilep = lep1 + lep2;
-                h_m_ll->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
-                h_pt_ll->Fill(dilep.Pt(), event_wgt * event_weight_triggers_dilepton_matched);
-                h_m_lb->Fill(min_mlb, event_wgt * event_weight_triggers_dilepton_matched);
-                h_m_bb->Fill(min_mbb, event_wgt * event_weight_triggers_dilepton_matched);
-            }
-//            std::cout << "12" << endl;
-            h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
-            h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
-
-    } // Event loop
-
+    // Declare variables outside of the event loop
+    Long64_t nEventsTotal = 0;
+    ProgressBar bar(ch->GetEntries());
+    
+    // Event loop
+    for (Long64_t event = 0; event < ch->GetEntries(); ++event) {
+      ch->GetEntry(event);
+    
+      // progress bar
+      nEventsTotal++;
+      bar.progress(nEventsTotal, nEventsChain);
+    
+      // Calculate variables needed for filling histograms
+      int njet_ct = 0;
+      float Ht = 0;
+      for (unsigned int i = 0; i < njet; i++) {
+        auto const& is_btagged = jet_is_btagged->at(i);
+        auto const& pt = jet_pt->at(i);
+        float const pt_threshold = (is_btagged ? 25. : 40.);
+        if (pt > pt_threshold) Ht += pt;
+        if (!is_btagged) njet_ct++;
+      }
+      TLorentzVector lep1;
+      lep1.SetPtEtaPhiM(lep_pt->at(0), lep_eta->at(0), lep_phi->at(0), lep_mass->at(0));
+      TLorentzVector lep2;
+      lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
+      TLorentzVector dilep = lep1 + lep2;
+    
+      // Fill histograms
+      if (PFMET_pt_final > 50.) {
+        h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+        h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+    
+        // dilepton hists
+        h_m_ll->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
+        h_pt_ll->Fill(dilep.Pt(), event_wgt * event_weight_triggers_dilepton_matched);
+        h_m_lb->Fill(min_mlb, event_wgt * event_weight_triggers_dilepton_matched);
+        h_m_bb->Fill(min_mbb, event_wgt * event_weight_triggers_dilepton_matched);
+    }
+    h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
+    h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
+    }
 
 //    std::cout << "13" << endl;
-
-    // move overflow contents to last bin
-    h_njet->SetBinContent(njet_nbin, h_njet->GetBinContent(njet_nbin+1) + h_njet->GetBinContent(njet_nbin));
-    h_njet->SetBinError(njet_nbin, std::sqrt(std::pow(h_njet->GetBinError(njet_nbin+1),2) + std::pow(h_njet->GetBinError(njet_nbin),2)));
-    h_met->SetBinContent(met_nbin, h_met->GetBinContent(met_nbin+1) + h_met->GetBinContent(met_nbin));
-    h_met->SetBinError(met_nbin, std::sqrt(std::pow(h_met->GetBinError(met_nbin+1),2) + std::pow(h_met->GetBinError(met_nbin),2)));
-    h_Ht->SetBinContent(Ht_nbin, h_Ht->GetBinContent(Ht_nbin+1) + h_Ht->GetBinContent(Ht_nbin));
-    h_Ht->SetBinError(Ht_nbin, std::sqrt(std::pow(h_Ht->GetBinError(Ht_nbin+1),2) + std::pow(h_Ht->GetBinError(Ht_nbin),2)));
-    h_lep1_pt->SetBinContent(lep1_pt_nbin, h_lep1_pt->GetBinContent(lep1_pt_nbin+1) + h_lep1_pt->GetBinContent(lep1_pt_nbin));
-    h_lep1_pt->SetBinError(lep1_pt_nbin, std::sqrt(std::pow(h_lep1_pt->GetBinError(lep1_pt_nbin+1),2) + std::pow(h_lep1_pt->GetBinError(lep1_pt_nbin),2)));
-    h_lep1_eta->SetBinContent(lep1_eta_nbin, h_lep1_eta->GetBinContent(lep1_eta_nbin+1) + h_lep1_eta->GetBinContent(lep1_eta_nbin));
-    h_lep1_eta->SetBinError(lep1_eta_nbin, std::sqrt(std::pow(h_lep1_eta->GetBinError(lep1_eta_nbin+1),2) + std::pow(h_lep1_eta->GetBinError(lep1_eta_nbin),2)));
-    h_lep1_phi->SetBinContent(lep1_phi_nbin, h_lep1_phi->GetBinContent(lep1_phi_nbin+1) + h_lep1_phi->GetBinContent(lep1_phi_nbin));
-    h_lep1_phi->SetBinError(lep1_phi_nbin, std::sqrt(std::pow(h_lep1_phi->GetBinError(lep1_phi_nbin+1),2) + std::pow(h_lep1_phi->GetBinError(lep1_phi_nbin),2)));
-    h_lep2_pt->SetBinContent(lep2_pt_nbin, h_lep2_pt->GetBinContent(lep2_pt_nbin+1) + h_lep2_pt->GetBinContent(lep2_pt_nbin));
-    h_lep2_pt->SetBinError(lep2_pt_nbin, std::sqrt(std::pow(h_lep2_pt->GetBinError(lep2_pt_nbin+1),2) + std::pow(h_lep2_pt->GetBinError(lep2_pt_nbin),2)));
-    h_lep2_eta->SetBinContent(lep2_eta_nbin, h_lep2_eta->GetBinContent(lep2_eta_nbin+1) + h_lep2_eta->GetBinContent(lep2_eta_nbin));
-    h_lep2_eta->SetBinError(lep2_eta_nbin, std::sqrt(std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin+1),2) + std::pow(h_lep2_eta->GetBinError(lep2_eta_nbin),2)));
-    h_lep2_phi->SetBinContent(lep2_phi_nbin, h_lep2_phi->GetBinContent(lep2_phi_nbin+1) + h_lep2_phi->GetBinContent(lep2_phi_nbin));
-    h_lep2_phi->SetBinError(lep2_phi_nbin, std::sqrt(std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin+1),2) + std::pow(h_lep2_phi->GetBinError(lep2_phi_nbin),2)));
-    h_pt_ll->SetBinContent(pt_ll_nbin, h_pt_ll->GetBinContent(pt_ll_nbin+1) + h_pt_ll->GetBinContent(pt_ll_nbin));
-    h_pt_ll->SetBinError(pt_ll_nbin, std::sqrt(std::pow(h_pt_ll->GetBinError(pt_ll_nbin+1),2) + std::pow(h_pt_ll->GetBinError(pt_ll_nbin),2)));
-    h_m_ll->SetBinContent(m_ll_nbin, h_m_ll->GetBinContent(m_ll_nbin+1) + h_m_ll->GetBinContent(m_ll_nbin));
-    h_m_ll->SetBinError(m_ll_nbin, std::sqrt(std::pow(h_m_ll->GetBinError(m_ll_nbin+1),2) + std::pow(h_m_ll->GetBinError(m_ll_nbin),2)));
-    h_m_lb->SetBinContent(m_lb_nbin, h_m_lb->GetBinContent(m_lb_nbin+1) + h_m_lb->GetBinContent(m_lb_nbin));
-    h_m_lb->SetBinError(m_lb_nbin, std::sqrt(std::pow(h_m_lb->GetBinError(m_lb_nbin+1),2) + std::pow(h_m_lb->GetBinError(m_lb_nbin),2)));
-    h_m_bb->SetBinContent(m_bb_nbin, h_m_bb->GetBinContent(m_bb_nbin+1) + h_m_bb->GetBinContent(m_bb_nbin));
-    h_m_bb->SetBinError(m_bb_nbin, std::sqrt(std::pow(h_m_bb->GetBinError(m_bb_nbin+1),2) + std::pow(h_m_bb->GetBinError(m_bb_nbin),2)));
-
-
-//    std::cout << "14" << endl;
-    // set overflow bin to 0
-    h_njet->SetBinContent(njet_nbin+1, 0);
-    h_njet->SetBinError(njet_nbin+1, 0);
-    h_Ht->SetBinContent(Ht_nbin+1, 0);
-    h_Ht->SetBinError(Ht_nbin+1, 0);
-    h_met->SetBinContent(met_nbin+1, 0);
-    h_met->SetBinError(met_nbin+1, 0);
-    h_lep1_pt->SetBinContent(lep1_pt_nbin+1, 0);
-    h_lep1_pt->SetBinError(lep1_pt_nbin+1, 0);
-    h_lep1_eta->SetBinContent(lep1_eta_nbin+1, 0);
-    h_lep1_eta->SetBinError(lep1_eta_nbin+1, 0);
-    h_lep1_phi->SetBinContent(lep1_phi_nbin+1, 0);
-    h_lep1_phi->SetBinError(lep1_phi_nbin+1, 0);
-    h_lep2_pt->SetBinContent(lep2_pt_nbin+1, 0);
-    h_lep2_pt->SetBinError(lep2_pt_nbin+1, 0);
-    h_lep2_eta->SetBinContent(lep2_eta_nbin+1, 0);
-    h_lep2_eta->SetBinError(lep2_eta_nbin+1, 0);
-    h_lep2_phi->SetBinContent(lep2_phi_nbin+1, 0);
-    h_lep2_phi->SetBinError(lep2_phi_nbin+1, 0);
-    h_pt_ll->SetBinContent(pt_ll_nbin+1, 0);
-    h_pt_ll->SetBinError(pt_ll_nbin+1, 0);  
-    h_m_ll->SetBinContent(m_ll_nbin+1, 0);
-    h_m_ll->SetBinError(m_ll_nbin+1, 0);  
-    h_m_lb->SetBinContent(m_lb_nbin+1, 0);
-    h_m_lb->SetBinError(m_lb_nbin+1, 0);
-    h_m_bb->SetBinContent(m_bb_nbin+1, 0);
-    h_m_bb->SetBinError(m_bb_nbin+1, 0);
+    std::vector<std::pair<TH1D*, int>> histograms_and_nbins{
+      {h_njet, njet_nbin},
+      {h_met, met_nbin},
+      {h_Ht, Ht_nbin},
+      {h_lep1_pt, lep1_pt_nbin},
+      {h_lep1_eta, lep1_eta_nbin},
+      {h_lep1_phi, lep1_phi_nbin},
+      {h_lep2_pt, lep2_pt_nbin},
+      {h_lep2_eta, lep2_eta_nbin},
+      {h_lep2_phi, lep2_phi_nbin}
+    };
+    
+    for (const auto& [histogram, nbin] : histograms_and_nbins) {
+      histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
+      histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1),2) + std::pow(histogram->GetBinError(nbin),2)));
+    }
 
 //    std::cout << "15" << endl;
 
