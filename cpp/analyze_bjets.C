@@ -7,10 +7,12 @@
 #include "TTreeCacheUnzip.h"
 #include "TTreePerfStats.h"
 #include "TCanvas.h"
+#include "TPad.h"
 #include "THStack.h"
 #include "TStyle.h"
 #include "TLine.h"
 #include "TLegend.h"
+#include "TRatioPlot.h"
 #include "TLatex.h"
 #include "TLorentzVector.h"
 
@@ -89,6 +91,7 @@ string getHistogramName(string hname){
     }
     else {
         std::cout << "hname not recognized" << endl;
+        std::cout << hname << endl;
     }
 
     return hname_latex;
@@ -121,11 +124,11 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   TCanvas *c = new TCanvas("c", "c", 800, 800);
 
   // divide the canvas into two pads
-  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.5, 1, 1.0);
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
   pad1->SetTopMargin(0.05);
-  pad1->SetBottomMargin(0.05);
-  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.5);
-  pad2->SetTopMargin(0.05);
+  pad1->SetBottomMargin(0.02);
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.3);
+  pad2->SetTopMargin(0.02);
   pad2->SetBottomMargin(0.3);
 
   // draw the histogram stack in the top pad
@@ -177,40 +180,42 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
 
   string hname_latex = getHistogramName(hname);
 
-  // make a ratio plot
+  // make a ratio plot in the bottom pad
   pad2->Draw();
   pad2->cd();
-  TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
-  h_ratio->Divide(h_mc);
-  h_ratio->SetMarkerStyle(20);
-  h_ratio->SetMarkerSize(1.2);
-  h_ratio->SetLineWidth(2);
-  h_ratio->SetLineColor(kBlack);
-  h_ratio->SetMinimum(0.0);
-  h_ratio->SetMaximum(2.0);
-  h_ratio->GetXaxis()->SetTitle(hname_latex.data());
-  h_ratio->GetYaxis()->SetTitle("Data/MC");
-  h_ratio->Draw("e1p");
+  TRatioPlot *rp = new TRatioPlot(h_data, h_mc);
+  rp->SetH1DrawOpt("e1p");
+  rp->SetH1Title("Data");
+  rp->SetH2Title("MC");
+  rp->Draw();
 
-  // draw the ratio plot axis labels
+  // set the axis titles for the ratio plot
+  rp->GetUpperPad()->SetTopMargin(0.02);
+  rp->GetUpperPad()->SetBottomMargin(0.03);
+  rp->GetLowerPad()->SetTopMargin(0.03);
+  rp->GetLowerPad()->SetBottomMargin(0.3);
+  rp->GetLowerRefYaxis()->SetTitle("Data/MC");
+  rp->GetLowerRefXaxis()->SetTitle(hname_latex.data());
+
+  // draw the cut string on the bottom pad
   tex->SetTextSize(0.03);
-  tex->SetTextAlign(32);
-  tex->DrawLatex(0.9, 0.5, cut_string.data());
-  tex->SetTextAlign(12);
-  tex->DrawLatex(0.15, 0.5, hname_latex.data());
+  tex->SetTextAngle(90);
+  tex->DrawLatex(0.03, 0.5, cut_string.data());
+  tex->SetTextAngle(0);
 
-  // save the plot to a file
-  c->SaveAs((plotDir + hname + ".png").data());
-  c->SaveAs((plotDir + hname + ".pdf").data());
+  // save the canvas to a file
+  c->SaveAs(Form("%s/%s.pdf", plotDir.data(), hname.data()));
+  c->SaveAs(Form("%s/%s.png", plotDir.data(), hname.data()));
 
   // clean up
   delete c;
   delete tex;
   delete legend;
-  delete h_ratio;
+  delete rp;
 
   return;
 }
+
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int nEventsChain = ch->GetEntries();
@@ -590,7 +595,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->SetMinimum(1e-1);
     hs->SetMaximum(3e5);
     hs->Draw("hist");
-    hs->GetXaxis()->SetTitle(hname_latex.data());
+    //hs->GetXaxis()->SetTitle(hname_latex.data());
     hs->GetYaxis()->SetTitle("Events");
 
     // fill the legend in reverse order
