@@ -181,7 +181,6 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir) {
 }
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
-    int nEventsTotal = 0;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
     TObjArray *listOfFiles = ch->GetListOfFiles();
@@ -284,10 +283,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     float min_mlb;
     ch->SetBranchAddress("min_mlb", &min_mlb);
 
-    // Declare variables outside of the event loop
-    Long64_t nEventsTotal = 0;
-    ProgressBar bar(ch->GetEntries());
-    
     // Event loop
     // Declare variables outside of the event loop
     Long64_t nEventsTotal = 0;
