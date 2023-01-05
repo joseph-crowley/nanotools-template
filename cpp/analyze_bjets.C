@@ -113,7 +113,6 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
   varPlot->SaveAs(varPlotName.data());
 }
 
-
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // make a ratio plot of the data/MC in the bottom pad
   // and a stacked histogram with data overlayed on the top pad
@@ -122,12 +121,12 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   TCanvas *c = new TCanvas("c", "c", 800, 800);
 
   // divide the canvas into two pads
-  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
-  pad1->SetTopMargin(0.1);
-  pad1->SetBottomMargin(0.0);
-  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.3);
-  pad2->SetTopMargin(0.0);
-  pad2->SetBottomMargin(0.2);
+  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.5, 1, 1.0);
+  pad1->SetTopMargin(0.05);
+  pad1->SetBottomMargin(0.05);
+  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.5);
+  pad2->SetTopMargin(0.05);
+  pad2->SetBottomMargin(0.3);
 
   // draw the histogram stack in the top pad
   pad1->Draw();
@@ -191,16 +190,26 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   h_ratio->SetMaximum(2.0);
   h_ratio->GetXaxis()->SetTitle(hname_latex.data());
   h_ratio->GetYaxis()->SetTitle("Data/MC");
-  h_ratio->Draw("ep");
+  h_ratio->Draw("e1p");
 
-  // draw a horizontal line at y = 1
-  TLine *line = new TLine(h_ratio->GetXaxis()->GetXmin(), 1, h_ratio->GetXaxis()->GetXmax(), 1);
-  line->SetLineStyle(2);
-  line->SetLineColor(kGray+2);
-  line->Draw();
+  // draw the ratio plot axis labels
+  tex->SetTextSize(0.03);
+  tex->SetTextAlign(32);
+  tex->DrawLatex(0.9, 0.5, cut_string.data());
+  tex->SetTextAlign(12);
+  tex->DrawLatex(0.15, 0.5, hname_latex.data());
 
   // save the plot to a file
-  c->SaveAs(plotDir.data());
+  c->SaveAs((plotDir + hname + ".png").data());
+  c->SaveAs((plotDir + hname + ".pdf").data());
+
+  // clean up
+  delete c;
+  delete tex;
+  delete legend;
+  delete h_ratio;
+
+  return;
 }
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
@@ -626,7 +635,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     f->Write();
     f->Close();
 
-    //makeRatioPlot(hs, h_data, hname, plotDir);
+    makeRatioPlot(hs, h_data, hname, plotDir);
 
     // clean up memory
     delete c;

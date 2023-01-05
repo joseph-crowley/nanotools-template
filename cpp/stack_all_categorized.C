@@ -2,7 +2,7 @@
 gROOT->ProcessLine(".L analyze_bjets.C+");
 
 
-std::string plotDir("/home/users/crowley/public_html/tttt/analyze_bjets_stacked");
+std::string plotDir("/home/users/crowley/public_html/tttt/analyze_bjets_stacked_2023_01_04");
 vector<string> rootFiles;
 rootFiles.push_back("outputs/mc/hists_TT_2l2nu.root");
 rootFiles.push_back("outputs/mc/hists_TT_lnu.root");
