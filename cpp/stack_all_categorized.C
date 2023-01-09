@@ -1,8 +1,12 @@
 {
-gROOT->ProcessLine(".x loadLib.C");
+// set up output
+gROOT->ProcessLine(".L directory_tools.C+");
+std::string dirName = directory_tools();
+std::cout << "Output directory: " << dirName << endl;
+
+// load the script
 gROOT->ProcessLine(".L analyze_bjets.C+");
 
-std::string plotDir("/home/users/crowley/public_html/tttt/analyze_bjets_stacked_2023_01_04");
 vector<string> rootFiles;
 rootFiles.push_back("outputs/mc/hists_TT_2l2nu.root");
 rootFiles.push_back("outputs/mc/hists_TT_lnu.root");
@@ -12,18 +16,18 @@ rootFiles.push_back("outputs/mc/hists_WW.root");
 rootFiles.push_back("outputs/mc/hists_Others.root");
 rootFiles.push_back("outputs/data/hists_Data_Run2.root");
 
-stackHists("njet", rootFiles, plotDir.data());
-stackHists("met", rootFiles, plotDir.data());
-stackHists("Ht", rootFiles, plotDir.data());
-stackHists("lep1_pt", rootFiles, plotDir.data());
-stackHists("lep2_pt", rootFiles, plotDir.data());
-//stackHists("lep1_eta", rootFiles, plotDir.data());
-//stackHists("lep1_phi", rootFiles, plotDir.data());
-//stackHists("lep2_eta", rootFiles, plotDir.data());
-//stackHists("lep2_phi", rootFiles, plotDir.data());
-stackHists("pt_ll", rootFiles, plotDir.data());
-stackHists("m_ll", rootFiles, plotDir.data());
-stackHists("m_lb", rootFiles, plotDir.data());
-stackHists("m_bb", rootFiles, plotDir.data());
+stackHists("njet", rootFiles, dirName);
+stackHists("met", rootFiles, dirName);
+stackHists("Ht", rootFiles, dirName);
+stackHists("lep1_pt", rootFiles, dirName);
+stackHists("lep2_pt", rootFiles, dirName);
+//stackHists("lep1_eta", rootFiles, dirName);
+//stackHists("lep1_phi", rootFiles, dirName);
+//stackHists("lep2_eta", rootFiles, dirName);
+//stackHists("lep2_phi", rootFiles, dirName);
+stackHists("pt_ll", rootFiles, dirName);
+stackHists("m_ll", rootFiles, dirName);
+stackHists("m_lb", rootFiles, dirName);
+stackHists("m_bb", rootFiles, dirName);
 
 }

@@ -143,7 +143,8 @@ void clearDirectory(const std::string& dirName)
 
 std::string directory_tools() {
     std::string dirName = get_dirName();
-    std::cout << "using dirName " << dirName << endl;
+    //std::cout << "Using dirName " << dirName << endl;
+    //std::cout << "Change dirName in directory_tools.C"  << endl;
     if (directoryExists(dirName))
     {
         // Find the next available backup directory name
