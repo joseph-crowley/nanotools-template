@@ -21,6 +21,7 @@
 //#include "../NanoCORE/SSSelections.cc"
 //#include "../NanoCORE/MetSelections.cc"
 #include "../NanoCORE/tqdm.h"
+#include "PlottingHelpers.h"
 
 #include <iostream>
 #include <iomanip>
@@ -117,23 +118,11 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
 }
 
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
-  // make a ratio plot of the data/MC in the bottom pad
-  // and a stacked histogram with data overlayed on the top pad
-
   // create a canvas to draw the plot on
-  TCanvas *c = new TCanvas("c", "c", 800, 800);
-
-  // divide the canvas into two pads
-  TPad *pad1 = new TPad("pad1", "pad1", 0, 0.3, 1, 1.0);
-  pad1->SetTopMargin(0.05);
-  pad1->SetBottomMargin(0.02);
-  TPad *pad2 = new TPad("pad2", "pad2", 0, 0.0, 1, 0.3);
-  pad2->SetTopMargin(0.02);
-  pad2->SetBottomMargin(0.3);
+  PlottingHelpers::PlotCanvas c("c", 600, 600, 1, 2, 0.15, 0.05, 0.3, 0.05, 0.0, 0.1, 0.5);
 
   // draw the histogram stack in the top pad
-  pad1->Draw();
-  pad1->cd();
+  c.getInsidePanels()[0][0]->cd();
   hs->SetMaximum(hs->GetMaximum() * 1.1);
   hs->SetMinimum(0.0);
   hs->Draw("hist");
@@ -143,12 +132,12 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   TLatex *tex = new TLatex();
   tex->SetNDC();
   tex->SetTextFont(42);
-  tex->SetTextSize(0.04);
+  tex->SetTextSize(c.getStdPixelSize_CMSLogo());
   tex->DrawLatex(0.15, 0.96, "CMS Preliminary");
   tex->DrawLatex(0.7, 0.96, "#sqrt{s} = 13 TeV");
 
   // draw the integrated luminosity
-  tex->SetTextSize(0.03);
+  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
   tex->DrawLatex(0.7, 0.88, Form("N_{events} = %.0f", h_data->Integral()));
 
   // get the last histogram in the stack (i.e. the MC histogram)
@@ -175,18 +164,15 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   }
 
   // draw the channel
-  tex->SetTextSize(0.03);
+  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
   tex->DrawLatex(0.15, 0.85, "Channel: e#mu");
 
   string hname_latex = getHistogramName(hname);
 
   // make a ratio plot in the bottom pad
-  pad2->Draw();
-  pad2->cd();
+  c.getInsidePanels()[1][0]->cd();
   TRatioPlot *rp = new TRatioPlot(h_data, h_mc);
   rp->SetH1DrawOpt("e1p");
-  rp->SetH1Title("Data");
-  rp->SetH2Title("MC");
   rp->Draw();
 
   // set the axis titles for the ratio plot
@@ -194,28 +180,26 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   rp->GetUpperPad()->SetBottomMargin(0.03);
   rp->GetLowerPad()->SetTopMargin(0.03);
   rp->GetLowerPad()->SetBottomMargin(0.3);
-  rp->GetLowerRefYaxis()->SetTitle("Data/MC");
-  rp->GetLowerRefXaxis()->SetTitle(hname_latex.data());
+  rp->GetLowerRefYaxis()->SetNdivisions(505);
+  rp->GetLowerRefYaxis()->SetTitleSize(c.getStdPixelSize_XYTitle());
+  rp->GetLowerRefYaxis()->SetTitleOffset(0.8);
+  rp->GetLowerRefYaxis()->SetLabelSize(c.getStdPixelSize_XYLabel());
+  rp->GetLowerRefYaxis()->SetTitle(Form("Ratio %s / %s", h_data->GetTitle(), h_mc->GetTitle()));
+  rp->GetLowerRefXaxis()->SetTitle(hname_latex.c_str());
+  rp->GetLowerRefXaxis()->SetLabelSize(c.getStdPixelSize_XYLabel());
+  rp->GetLowerRefXaxis()->SetTitleSize(c.getStdPixelSize_XYTitle());
+  rp->GetLowerRefXaxis()->SetTitleOffset(1.0);
 
-  // draw the cut string on the bottom pad
-  tex->SetTextSize(0.03);
-  tex->SetTextAngle(90);
-  tex->DrawLatex(0.03, 0.5, cut_string.data());
-  tex->SetTextAngle(0);
+  // draw the cut string on the canvas
+  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
+  tex->DrawLatex(0.15, 0.75, cut_string.c_str());
 
-  // save the canvas to a file
-  c->SaveAs(Form("%s/%s.pdf", plotDir.data(), hname.data()));
-  c->SaveAs(Form("%s/%s.png", plotDir.data(), hname.data()));
-
-  // clean up
-  delete c;
-  delete tex;
-  delete legend;
-  delete rp;
-
-  return;
+  // save the plot to file
+  c.addLegend(legend);
+  c.addText(tex);
+  c.update();
+  c.save(plotDir.c_str(), "png", hname.c_str());
 }
-
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int nEventsChain = ch->GetEntries();
