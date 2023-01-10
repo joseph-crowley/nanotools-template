@@ -122,7 +122,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   PlottingHelpers::PlotCanvas c("c", 600, 600, 1, 2, 0.15, 0.05, 0.3, 0.05, 0.0, 0.1, 0.5);
 
   // draw the histogram stack in the top pad
-  c.getInsidePanels()[0][0]->cd();
+  c.getInsidePanels()[0][1]->cd();
   hs->SetMaximum(hs->GetMaximum() * 1.1);
   hs->SetMinimum(0.0);
   hs->Draw("hist");
@@ -170,25 +170,20 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   string hname_latex = getHistogramName(hname);
 
   // make a ratio plot in the bottom pad
-  c.getInsidePanels()[1][0]->cd();
-  TRatioPlot *rp = new TRatioPlot(h_data, h_mc);
-  rp->SetH1DrawOpt("e1p");
-  rp->Draw();
+  c.getInsidePanels()[0][0]->cd();
+  TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
+  h_ratio->Divide(h_mc);
 
   // set the axis titles for the ratio plot
-  rp->GetUpperPad()->SetTopMargin(0.02);
-  rp->GetUpperPad()->SetBottomMargin(0.03);
-  rp->GetLowerPad()->SetTopMargin(0.03);
-  rp->GetLowerPad()->SetBottomMargin(0.3);
-  rp->GetLowerRefYaxis()->SetNdivisions(505);
-  rp->GetLowerRefYaxis()->SetTitleSize(c.getStdPixelSize_XYTitle());
-  rp->GetLowerRefYaxis()->SetTitleOffset(0.8);
-  rp->GetLowerRefYaxis()->SetLabelSize(c.getStdPixelSize_XYLabel());
-  rp->GetLowerRefYaxis()->SetTitle(Form("Ratio %s / %s", h_data->GetTitle(), h_mc->GetTitle()));
-  rp->GetLowerRefXaxis()->SetTitle(hname_latex.c_str());
-  rp->GetLowerRefXaxis()->SetLabelSize(c.getStdPixelSize_XYLabel());
-  rp->GetLowerRefXaxis()->SetTitleSize(c.getStdPixelSize_XYTitle());
-  rp->GetLowerRefXaxis()->SetTitleOffset(1.0);
+  h_ratio->SetMarkerStyle(20);
+  h_ratio->SetMarkerSize(1.2);
+  h_ratio->SetLineWidth(2);
+  h_ratio->SetLineColor(kBlack);
+  h_ratio->SetMinimum(0.0);
+  h_ratio->SetMaximum(2.0);
+  h_ratio->GetXaxis()->SetTitle(hname_latex.data());
+  h_ratio->GetYaxis()->SetTitle("Data/MC");
+  h_ratio->Draw("e1p");
 
   // draw the cut string on the canvas
   tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());

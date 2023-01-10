@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <TString.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -27,79 +28,77 @@ bool directoryExists(const std::string& dirName_in)
     return exists;
 }
 
-// Function to copy a directory
-void copyDirectory(const std::string& src, const std::string& dest)
-{
-    // Create the destination directory
-    mkdir(dest.data(), 0777);
-
-    // Open the source directory
-    DIR *dir = opendir(src.data());
-    if (!dir)
+void copyFile(const std::string& srcPath, const std::string& destPath) {
+    // Open the source file
+    FILE *srcFile = fopen(srcPath.data(), "rb");
+    if (!srcFile)
     {
-        std::cout << "Error opening source directory: " << std::strerror(errno) << std::endl;
+        std::cout << "Error opening source file: " << std::strerror(errno) << std::endl;
         return;
     }
-
-    // Loop through all the files in the source directory
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL)
+    
+    // Open the destination file
+    FILE *destFile = fopen(destPath.data(), "wb");
+    if (!destFile)
     {
-        // Ignore the current and parent directories
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        std::cout << "Error opening destination file: " << std::strerror(errno) << std::endl;
+        fclose(srcFile);
+        return;
+    }
+    
+    // Copy the file contents
+    char buffer[1024];
+    size_t n;
+    while ((n = fread(buffer, 1, 1024, srcFile)) > 0)
+    {
+        if (fwrite(buffer, 1, n, destFile) != n)
         {
-            continue;
-        }
-
-        std::string srcPath = src + "/" + entry->d_name;
-        std::string destPath = dest + "/" + entry->d_name;
-
-        // If the entry is a directory, recursively copy it
-        if (entry->d_type == DT_DIR)
-        {
-            copyDirectory(srcPath, destPath);
-        }
-        else
-        {
-            // Otherwise, copy the file
-
-            // Open the source file
-            FILE *srcFile = fopen(srcPath.data(), "rb");
-            if (!srcFile)
-            {
-                std::cout << "Error opening source file: " << std::strerror(errno) << std::endl;
-                continue;
-            }
-
-            // Open the destination file
-            FILE *destFile = fopen(destPath.data(), "wb");
-            if (!destFile)
-            {
-                std::cout << "Error opening destination file: " << std::strerror(errno) << std::endl;
-                fclose(srcFile);
-                continue;
-            }
-
-            // Copy the file contents
-            char buffer[1024];
-            size_t n;
-            while ((n = fread(buffer, 1, 1024, srcFile)) > 0)
-            {
-                if (fwrite(buffer, 1, n, destFile) != n)
-                {
-                    std::cout << "Error writing to destination file: " << std::strerror(errno) << std::endl;
-                    break;
-                }
-            }
-
-            // Close the files
-            fclose(srcFile);
-            fclose(destFile);
+            std::cout << "Error writing to destination file: " << std::strerror(errno) << std::endl;
+            break;
         }
     }
-
-    closedir(dir);
+    
+    // Close the files
+    fclose(srcFile);
+    fclose(destFile);
 }
+
+// Function to copy a directory
+void copyDirectory(const std::string& src, const std::string& dest) {
+  // Create the destination directory
+  if (mkdir(dest.data(), 0777) != 0) {
+    throw std::runtime_error("Error creating directory: " + dest);
+  }
+
+  // Open the source directory
+  DIR *dir = opendir(src.data());
+  if (!dir) {
+    throw std::runtime_error("Error opening directory: " + src);
+  }
+
+  // Loop through all the files in the source directory
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != NULL) {
+    // Ignore the current and parent directories
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+      continue;
+    }
+
+    std::string srcPath = src + "/" + entry->d_name;
+    std::string destPath = dest + "/" + entry->d_name;
+
+    // If the entry is a directory, recursively copy it
+    if (entry->d_type == DT_DIR) {
+      copyDirectory(srcPath, destPath);
+    } else {
+      // Otherwise, copy the file
+      copyFile(srcPath, destPath);
+    }
+  }
+
+  closedir(dir);
+}
+
 
 // Function to delete the contents of a directory
 void clearDirectory(const std::string& dirName)
@@ -166,6 +165,9 @@ std::string directory_tools() {
         // Create the directory
         mkdir(dirName.data(), 0777);
     }
+
+    // for distribution on UAF
+    copyFile("/home/users/crowley/public_html/index_plots.php", dirName + "/index.php");
 
     return dirName;
 }
