@@ -120,7 +120,7 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
 
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // create a canvas to draw the plot on
-  TString canvasname = "c_" + hname + "_ratio_plot";
+  TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 1., 0.2, 0.0875, 0., 0.1, 0.3);
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
   cout << "Preparing canvas " << canvasname << "..." << endl;
@@ -182,8 +182,10 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   tex->DrawLatex(0.15, 0.75, cut_string.c_str());
 
   // save the plot to file
-  plot.save(plotDir+"/"+ canvasname, "png"); 
-  plot.save(plotDir+"/"+ canvasname, "pdf"); 
+  std::cout << plotDir << "/" << canvasname << endl;
+ 
+  plot.save(plotDir, "png"); 
+  plot.save(plotDir, "pdf"); 
 }
  
 
