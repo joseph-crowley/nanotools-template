@@ -22,6 +22,7 @@
 //#include "../NanoCORE/MetSelections.cc"
 #include "../NanoCORE/tqdm.h"
 #include "PlottingHelpers.h"
+using namespace PlottingHelpers;
 
 #include <iostream>
 #include <iomanip>
@@ -119,26 +120,17 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
 
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // create a canvas to draw the plot on
-  PlottingHelpers::PlotCanvas c("c", 600, 600, 1, 2, 0.15, 0.05, 0.3, 0.05, 0.0, 0.1, 0.5);
+  TString canvasname = "c_" + hname + "_ratio_plot";
+  PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 1., 0.2, 0.0875, 0., 0.1, 0.3);
+  plot.addCMSLogo(kPreliminary, 13, 0, 0);
+  cout << "Preparing canvas " << canvasname << "..." << endl;
 
   // draw the histogram stack in the top pad
-  c.getInsidePanels()[0][1]->cd();
+  plot.getInsidePanels()[0][1]->cd();
   hs->SetMaximum(hs->GetMaximum() * 1.1);
   hs->SetMinimum(0.0);
   hs->Draw("hist");
   h_data->Draw("e1p same");
-
-  // draw the CMS logo
-  TLatex *tex = new TLatex();
-  tex->SetNDC();
-  tex->SetTextFont(42);
-  tex->SetTextSize(c.getStdPixelSize_CMSLogo());
-  tex->DrawLatex(0.15, 0.96, "CMS Preliminary");
-  tex->DrawLatex(0.7, 0.96, "#sqrt{s} = 13 TeV");
-
-  // draw the integrated luminosity
-  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
-  tex->DrawLatex(0.7, 0.88, Form("N_{events} = %.0f", h_data->Integral()));
 
   // get the last histogram in the stack (i.e. the MC histogram)
   TH1F* h_mc = (TH1F*)hs->GetStack()->Last();
@@ -164,17 +156,17 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   }
 
   // draw the channel
-  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
+  TLatex *tex = new TLatex();
+  tex->SetNDC();
+  tex->SetTextSize(plot.getStdPixelSize_CMSLogoExtras());
   tex->DrawLatex(0.15, 0.85, "Channel: e#mu");
 
   string hname_latex = getHistogramName(hname);
 
   // make a ratio plot in the bottom pad
-  c.getInsidePanels()[0][0]->cd();
+  plot.getInsidePanels()[0][0]->cd();
   TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
   h_ratio->Divide(h_mc);
-
-  // set the axis titles for the ratio plot
   h_ratio->SetMarkerStyle(20);
   h_ratio->SetMarkerSize(1.2);
   h_ratio->SetLineWidth(2);
@@ -186,15 +178,14 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   h_ratio->Draw("e1p");
 
   // draw the cut string on the canvas
-  tex->SetTextSize(c.getStdPixelSize_CMSLogoExtras());
+  tex->SetTextSize(plot.getStdPixelSize_CMSLogoExtras());
   tex->DrawLatex(0.15, 0.75, cut_string.c_str());
 
   // save the plot to file
-  c.addLegend(legend);
-  c.addText(tex);
-  c.update();
-  c.save(plotDir.c_str(), "png", hname.c_str());
+  plot.save(plotDir+"/"+ canvasname, "png"); 
+  plot.save(plotDir+"/"+ canvasname, "pdf"); 
 }
+ 
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int nEventsChain = ch->GetEntries();
