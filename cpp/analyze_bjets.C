@@ -100,10 +100,10 @@ string getHistogramName(string hname){
 }
 
 void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir) {
-  TCanvas *varPlot = new TCanvas(varName.c_str(), varName.c_str(), 1000,800);
+  TCanvas *varPlot = new TCanvas(varName.c_str(), "", 1000,800);
   varPlot->cd();
-  h_var->GetXaxis()->SetTitle(varName.c_str());
-  h_var->GetYaxis()->SetTitle("Events");
+  //h_var->GetXaxis()->SetTitle(varName.c_str());
+  //h_var->GetYaxis()->SetTitle("Events");
   h_var->Draw();
   varPlot->SetLogy();
   
@@ -121,7 +121,7 @@ void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
-  PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 1., 0.2, 0.0875, 0., 0.1, 0.3);
+  PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
   cout << "Preparing canvas " << canvasname << "..." << endl;
 
@@ -130,17 +130,39 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   hs->SetMaximum(hs->GetMaximum() * 1.1);
   hs->SetMinimum(0.0);
   hs->Draw("hist");
+  hs->GetXaxis()->SetTitleFont(PlotCanvas::getStdFont_XYTitle());
+  hs->GetXaxis()->SetTitleSize(plot.getStdPixelSize_XYTitle());
+  hs->GetXaxis()->SetLabelFont(PlotCanvas::getStdFont_XYLabel());
+  hs->GetXaxis()->SetLabelSize(plot.getStdPixelSize_XYLabel());
+  hs->GetXaxis()->SetLabelOffset(plot.getStdOffset_XLabel());
+  hs->GetYaxis()->SetTitleFont(PlotCanvas::getStdFont_XYTitle());
+  hs->GetYaxis()->SetTitleSize(plot.getStdPixelSize_XYTitle());
+  hs->GetYaxis()->SetLabelFont(PlotCanvas::getStdFont_XYLabel());
+  hs->GetYaxis()->SetLabelSize(plot.getStdPixelSize_XYLabel());
+  hs->GetYaxis()->SetLabelOffset(plot.getStdOffset_YLabel());
   h_data->Draw("e1p same");
 
   // get the last histogram in the stack (i.e. the MC histogram)
   TH1F* h_mc = (TH1F*)hs->GetStack()->Last();
 
   // create a legend
-  TLegend *legend = new TLegend(0.7, 0.8, 0.9, 0.9);
+  TLegend *legend = new TLegend(0.7, 0.7, 0.95, 0.90);
+  legend->SetBorderSize(0);
+  legend->SetTextFont(43);
+  legend->SetTextSize(plot.getStdPixelSize_XYLabel());
+  legend->SetLineColor(1);
+  legend->SetLineStyle(1);
+  legend->SetLineWidth(1);
   legend->SetFillColor(0);
-  legend->SetLineColor(0);
-  legend->AddEntry(h_data, "Data", "ep");
+  legend->SetFillStyle(0);
+  legend->AddEntry(h_data, "Observed", "ep");
   legend->AddEntry(h_mc, "MC", "f");
+
+
+  // TODO: fill in the MC components in legend
+  // also compute the size of the legend based on the number of entries
+  // ymin = ymax - (entry_size)*n_entries
+
   legend->Draw();
 
   // make the cut string
@@ -166,6 +188,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   // make a ratio plot in the bottom pad
   plot.getInsidePanels()[0][0]->cd();
   TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
+  h_ratio->SetTitle("");
   h_ratio->Divide(h_mc);
   h_ratio->SetMarkerStyle(20);
   h_ratio->SetMarkerSize(1.2);
@@ -173,8 +196,46 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   h_ratio->SetLineColor(kBlack);
   h_ratio->SetMinimum(0.0);
   h_ratio->SetMaximum(2.0);
-  h_ratio->GetXaxis()->SetTitle(hname_latex.data());
-  h_ratio->GetYaxis()->SetTitle("Data/MC");
+
+  // Add x and y titles
+  TPad* pad_xtitle = plot.getBorderPanels().at(0); pad_xtitle->cd();
+  TLatex* xtitle = new TLatex(); plot.addText(xtitle);
+  xtitle->SetTextAlign(22);
+  xtitle->SetTextFont(PlotCanvas::getStdFont_XYTitle());
+  xtitle->SetTextSize(plot.getStdPixelSize_XYTitle());
+  xtitle->DrawLatexNDC(0.5, 0.5, hname_latex.data());
+  plot.getInsidePanels()[0][0]->cd();
+
+  TPad* pad_ytitle = plot.getBorderPanels().at(1); pad_ytitle->cd();
+  TLatex* ytitle = new TLatex(); plot.addText(ytitle);
+  ytitle->SetTextAlign(22);
+  ytitle->SetTextFont(PlotCanvas::getStdFont_XYTitle());
+  ytitle->SetTextSize(plot.getStdPixelSize_XYTitle());
+  ytitle->SetTextAngle(90);
+  ytitle->DrawLatexNDC(0.5, 1.-0.5/1.4, "Events / bin");
+  ytitle->DrawLatexNDC(0.5, 0.15/1.4, "Ratio");
+  plot.getInsidePanels()[0][0]->cd();
+  
+  hs->GetYaxis()->SetTitle("");
+  hs->GetXaxis()->SetTitle("");
+
+  h_ratio->GetYaxis()->SetTitle("");
+  h_ratio->GetXaxis()->SetTitle("");
+  h_ratio->GetYaxis()->SetNdivisions(505);
+
+  h_ratio->GetXaxis()->SetTitleFont(PlotCanvas::getStdFont_XYTitle());
+  h_ratio->GetXaxis()->SetTitleSize(plot.getStdPixelSize_XYTitle());
+  h_ratio->GetXaxis()->SetLabelFont(PlotCanvas::getStdFont_XYLabel());
+  h_ratio->GetXaxis()->SetLabelSize(plot.getStdPixelSize_XYLabel());
+  h_ratio->GetXaxis()->SetLabelOffset(plot.getStdOffset_XLabel());
+  h_ratio->GetYaxis()->SetTitleFont(PlotCanvas::getStdFont_XYTitle());
+  h_ratio->GetYaxis()->SetTitleSize(plot.getStdPixelSize_XYTitle());
+  h_ratio->GetYaxis()->SetLabelFont(PlotCanvas::getStdFont_XYLabel());
+  h_ratio->GetYaxis()->SetLabelSize(plot.getStdPixelSize_XYLabel());
+  h_ratio->GetYaxis()->SetLabelOffset(plot.getStdOffset_YLabel());
+
+  // manual
+  h_ratio->GetXaxis()->SetTitleOffset(2);
   h_ratio->Draw("e1p");
 
   // draw the cut string on the canvas
@@ -539,9 +600,9 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     colors.push_back(kCyan);
 
     // stack the histograms and make a plot
-    TCanvas *c = new TCanvas(hname.data(),hname.data(), 1000,800);
+    TCanvas *c = new TCanvas(hname.data(),"", 1000,800);
     c->cd();
-    THStack *hs = new THStack(hname.data(),hname.data());
+    THStack *hs = new THStack(hname.data(),"");
     TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
 
     // add the Others histogram first
@@ -549,6 +610,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
     h_Others->SetLineWidth(1);
     h_Others->SetFillStyle(3001);
+    h_Others->GetXaxis()->SetTitle("");
     hs->Add(h_Others);
 
     for(int i = 0; i < hists_sorted.size(); i++){
@@ -559,6 +621,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
         hists_sorted[i].second->SetLineWidth(1);
         hists_sorted[i].second->SetFillStyle(3001);
+        hists_sorted[i].second->GetXaxis()->SetTitle("");
         hs->Add(hists_sorted[i].second);
     }
 
@@ -568,7 +631,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->SetMaximum(3e5);
     hs->Draw("hist");
     //hs->GetXaxis()->SetTitle(hname_latex.data());
-    hs->GetYaxis()->SetTitle("Events");
+    //hs->GetYaxis()->SetTitle("Events");
 
     // fill the legend in reverse order
     for(int i = hists_sorted.size() - 1; i >= 0; i--){
