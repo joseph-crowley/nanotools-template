@@ -14,8 +14,13 @@ cd ..
 ```
 
 ### note about using ivy:
+this repo now depends on ivy tools. source them here:  
+https://github.com/cmstas/tttt
 ```
+cd ~/tttt/CMSSW_10_6_26/src/tttt
+cmsenv
 eval $(./setup.sh env)
+cd -
 ```
 
 ## Then run the example:
