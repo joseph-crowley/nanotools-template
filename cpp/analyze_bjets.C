@@ -33,6 +33,19 @@ using namespace PlottingHelpers;
 #define COUNT_LT(vec,num) std::count_if((vec).begin(), (vec).end(), [](float x) { return x < (num); });
 
 #define H1(name,nbins,low,high) TH1F *h_##name = new TH1F(#name,#name,nbins,low,high);
+#define H1vec(name,nbins,low,high) \
+  std::vector<TH1F *> h_##name ; \
+  for (unsigned int i=0; i<3; i++){ \
+    /* name the categories lt2 eq2 gt2 */ \
+    std::string catname = #name; \
+    if (catname == "nbjet") { if (i>0) break;} \
+    else {\
+      if (i==0) catname += "_nb_lt2"; \
+      else if (i==1) catname += "_nb_eq2"; \
+      else if (i==2) catname += "_nb_gt2"; \
+    }
+    h_##name.push_back(new TH1F(catname.c_str(),catname.c_str(),nbins,low,high)); \
+  }
 
 // #define DEBUG
 
@@ -99,23 +112,25 @@ string getHistogramName(string hname){
     return hname_latex;
 }
 
-void plotVariable(string varName, TH1F* h_var, string sample_str, string plotDir) {
-  TCanvas *varPlot = new TCanvas(varName.c_str(), "", 1000,800);
-  varPlot->cd();
-  //h_var->GetXaxis()->SetTitle(varName.c_str());
-  //h_var->GetYaxis()->SetTitle("Events");
-  h_var->Draw();
-  varPlot->SetLogy();
+void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string plotDir) {
+    for (auto const& h_var: h_vars){
+      TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
+      varPlot->cd();
+      //h_var->GetXaxis()->SetTitle(varName.c_str());
+      //h_var->GetYaxis()->SetTitle("Events");
+      h_var->Draw();
+      varPlot->SetLogy();
   
-  string varPlotName = plotDir + "/" + varName + "_";
-  varPlotName += sample_str;
-  varPlotName += ".pdf";
-  varPlot->SaveAs(varPlotName.data());
+      string varPlotName = plotDir + "/" + varName + "_";
+      varPlotName += sample_str;
+      varPlotName += ".pdf";
+      varPlot->SaveAs(varPlotName.data());
 
-  varPlotName = plotDir + "/" + varName + "_";
-  varPlotName += sample_str;
-  varPlotName += ".png";
-  varPlot->SaveAs(varPlotName.data());
+      varPlotName = plotDir + "/" + varName + "_";
+      varPlotName += sample_str;
+      varPlotName += ".png";
+      varPlot->SaveAs(varPlotName.data());
+    }
 }
 
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
@@ -275,43 +290,46 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     std::cout << "1" << endl;
     int const njet_nbin = 7;
-    H1(njet,njet_nbin,0,njet_nbin);
+    H1vec(njet,njet_nbin,0,njet_nbin);
+
+    int const nbjet_nbin = 7;
+    H1vec(nbjet,nbjet_nbin,0,nbjet_nbin);
 //    std::cout << "2" << endl;
 
     int const met_nbin = 40;
-    H1(met,met_nbin,0,1000);
+    H1vec(met,met_nbin,0,1000);
 
     int const Ht_nbin = 100;
-    H1(Ht,Ht_nbin,0,1000);
+    H1vec(Ht,Ht_nbin,0,1000);
 
     // leading lepton histograms
     int const lep1_pt_nbin = 100;
     int const lep1_eta_nbin = 50;
     int const lep1_phi_nbin = 32;
-    H1(lep1_pt,lep1_pt_nbin,0,1000);
-    H1(lep1_eta,lep1_eta_nbin,-2.5,2.5);
-    H1(lep1_phi,lep1_phi_nbin,-3.2,3.2);
+    H1vec(lep1_pt,lep1_pt_nbin,0,1000);
+    H1vec(lep1_eta,lep1_eta_nbin,-2.5,2.5);
+    H1vec(lep1_phi,lep1_phi_nbin,-3.2,3.2);
 
     // subleading lepton histograms
     int const lep2_pt_nbin = 100;
     int const lep2_eta_nbin = 50;
     int const lep2_phi_nbin = 32;
-    H1(lep2_pt,lep2_pt_nbin,0,1000);
-    H1(lep2_eta,lep2_eta_nbin,-2.5,2.5);
-    H1(lep2_phi,lep2_phi_nbin,-3.2,3.2);
+    H1vec(lep2_pt,lep2_pt_nbin,0,1000);
+    H1vec(lep2_eta,lep2_eta_nbin,-2.5,2.5);
+    H1vec(lep2_phi,lep2_phi_nbin,-3.2,3.2);
     
     // dilepton histograms
 
     int const pt_ll_nbin = 100;
-    H1(pt_ll,pt_ll_nbin,0,1000);
+    H1vec(pt_ll,pt_ll_nbin,0,1000);
 
     // invariant mass histograms
     int const m_ll_nbin = 40;
     int const m_lb_nbin = 40;
     int const m_bb_nbin = 40;
-    H1(m_ll,m_ll_nbin,0,1000);
-    H1(m_lb,m_lb_nbin,0,1000);
-    H1(m_bb,m_bb_nbin,0,1000);
+    H1vec(m_ll,m_ll_nbin,0,1000);
+    H1vec(m_lb,m_lb_nbin,0,1000);
+    H1vec(m_bb,m_bb_nbin,0,1000);
 
     // set up branches
 
@@ -389,56 +407,61 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       TLorentzVector dilep = lep1 + lep2;
     
       // Fill histograms
-      if (PFMET_pt_final > 50.) {
-        h_njet->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        // TODO: add njet with nb=2, nb>2, and add nb plot
-        h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+      if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+      for (unsigned int i_bjet = 0; i_bjet < 3; i_bjet++){
+        // lt2 eq2 gt2 
+        if ((i_bjet == 0) && (nbjet >= 2)) continue;
+        if ((i_bjet == 1) && (nbjet != 2)) continue;
+        if ((i_bjet == 2) && (nbjet <= 2)) continue;
+
+        if (PFMET_pt_final > 50.) {
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          // TODO: add njet with nb=2, nb>2, and add nb plot
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+      
+          // dilepton hists
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        }
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+      }
+    }
+
+    std::vector<std::vector<TH1F *> *> histograms {&h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
     
-        // dilepton hists
-        h_m_ll->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_pt_ll->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_m_lb->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_m_bb->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+    for (int i = 0; i < histograms.size(); i++) {
+        for (auto& histogram : *histograms.at(i)) {
+          int nbin = histogram->GetNbinsX();
+          histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
+          histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1), 2) + std::pow(histogram->GetBinError(nbin), 2)));
+        }
     }
-    h_met->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-    h_Ht->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-    }
-
-
-    const int num_histograms = 9;
-    TH1F* histograms[num_histograms] = {h_njet, h_met, h_Ht, h_lep1_pt, h_lep1_eta, h_lep1_phi, h_lep2_pt, h_lep2_eta, h_lep2_phi};
-    int nbins[num_histograms] = {njet_nbin, met_nbin, Ht_nbin, lep1_pt_nbin, lep1_eta_nbin, lep1_phi_nbin, lep2_pt_nbin, lep2_eta_nbin, lep2_phi_nbin};
-    
-    for (int i = 0; i < num_histograms; i++) {
-      TH1F* histogram = histograms[i];
-      int nbin = nbins[i];
-      histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
-      histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1), 2) + std::pow(histogram->GetBinError(nbin), 2)));
-    }
-
-
 
     bar.finish();
 
     // save histograms as png, pdf, and root files
-    plotVariable("njet", h_njet, sample_str, plotDir);
-    plotVariable("p_{T}^{miss}", h_met, sample_str, plotDir);
-    plotVariable("H_{T}", h_Ht, sample_str, plotDir);
-    plotVariable("p_{T}^{lep1}", h_lep1_pt, sample_str, plotDir);
-    plotVariable("#eta^{lep1}", h_lep1_eta, sample_str, plotDir);
-    plotVariable("#phi^{lep1}", h_lep1_phi, sample_str, plotDir);
-    plotVariable("p_{T}^{lep2}", h_lep2_pt, sample_str, plotDir);
-    plotVariable("#eta^{lep2}", h_lep2_eta, sample_str, plotDir);
-    plotVariable("#phi^{lep2}", h_lep2_phi, sample_str, plotDir);
-    plotVariable("p_{T}^{ll}", h_pt_ll, sample_str, plotDir);
-    plotVariable("M_{ll}", h_m_ll, sample_str, plotDir);
-    plotVariable("M_{lb}", h_m_lb, sample_str, plotDir);
-    plotVariable("M_{bb}", h_m_bb, sample_str, plotDir);
+    plotVariable(h_njet, sample_str, plotDir);
+    plotVariable(h_nbjet, sample_str, plotDir);
+    plotVariable(h_met, sample_str, plotDir);
+    plotVariable(h_Ht, sample_str, plotDir);
+    plotVariable(h_lep1_pt, sample_str, plotDir);
+    plotVariable(h_lep1_eta, sample_str, plotDir);
+    plotVariable(h_lep1_phi, sample_str, plotDir);
+    plotVariable(h_lep2_pt, sample_str, plotDir);
+    plotVariable(h_lep2_eta, sample_str, plotDir);
+    plotVariable(h_lep2_phi, sample_str, plotDir);
+    plotVariable(h_pt_ll, sample_str, plotDir);
+    plotVariable(h_m_ll, sample_str, plotDir);
+    plotVariable(h_m_lb, sample_str, plotDir);
+    plotVariable(h_m_bb, sample_str, plotDir);
 
     std::cout << "20" << endl;
     // save histograms to root file
@@ -448,22 +471,31 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 //    std::cout << "21" << endl;
 
     TFile* f = new TFile(outfile_name.data(), "RECREATE");
-    h_njet->Write();
-//    std::cout << "22" << endl;
-    h_met->Write();
-    h_Ht->Write();
-    h_lep1_pt->Write();
-    h_lep1_eta->Write();
-    h_lep1_phi->Write();
-    h_lep2_pt->Write();
-    h_lep2_eta->Write();
-    h_lep2_phi->Write();
 
-    h_pt_ll->Write();
-    h_m_ll->Write();
-    h_m_lb->Write();
-    h_m_bb->Write();
-    std::cout << "472" << endl;
+#define WRITE_HISTOGRAMS \
+   WRITE_HISTOGRAM(h_nbjet) \  
+   WRITE_HISTOGRAM(h_njet) \   
+   WRITE_HISTOGRAM(h_met) \
+   WRITE_HISTOGRAM(h_Ht)\
+   WRITE_HISTOGRAM(h_lep1_pt)\
+   WRITE_HISTOGRAM(h_lep1_eta)\
+   WRITE_HISTOGRAM(h_lep1_phi)\
+   WRITE_HISTOGRAM(h_lep2_pt)\
+   WRITE_HISTOGRAM(h_lep2_eta)\
+   WRITE_HISTOGRAM(h_lep2_phi)\
+   WRITE_HISTOGRAM(h_pt_ll)\
+   WRITE_HISTOGRAM(h_m_ll)\
+   WRITE_HISTOGRAM(h_m_lb)\
+   WRITE_HISTOGRAM(h_m_bb)
+
+#define WRITE_HISTOGRAM(name) for (auto& h: name) std::cout << "will write " << h->GetName() << std::endl;
+WRITE_HISTOGRAMS
+#undef WRITE_HISTOGRAM 
+
+#define WRITE_HISTOGRAM(name) for (auto& h: name) h->Write();
+WRITE_HISTOGRAMS
+#undef WRITE_HISTOGRAM 
+#undef WRITE_HISTOGRAMS
 
     f->Write();
     f->Close();
