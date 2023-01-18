@@ -18,7 +18,7 @@ def get_category(samp, sample_map):
         return sample_map[base_sample]
     return 'Ignore'
 
-def get_all_files(periods = [], SKIMDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221201_tt_bkg"):
+def get_all_files(periods = [], SKIMDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"):
     cmd = f'ls {SKIMDIR}'
     periods = subprocess.check_output(cmd, shell=True).decode('ascii').split('\n')[:-1]
     
@@ -102,7 +102,40 @@ def main():
     print(f'chosen samples: \n{json.dumps(samples,indent=4)}')
     
     # write a line for a doAll script 
-    basedir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_FakeRates/221201_tt_bkg'
+    basedir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC'
+
+    # define where the output files go
+    rootDir = 'outputs/mc'
+    subprocess.run(["mkdir -p ../cpp/"+rootDir],shell=True)
+
+    chains = []
+    for sample in samples:
+        samp = sample.split('/')[-1]
+        samp_noext = samp.replace("_ext","")
+        cat = get_category(samp, sample_map)
+        if cat == 'Ignore': continue
+
+        period = sample.split('/')[0]
+        if samp_noext not in chains:
+            chains.append(samp_noext)
+            out[cat] += f'// chain for {samp}\n'
+            out[cat] += f'TChain *ch{samp_noext} = new TChain("Events");\n'
+            out[cat] += f'std::string sample_str{samp_noext}("{samp}");\n'
+
+        out[cat] += '\n'
+        out[cat] += f'// files for {samp} {period}\n'
+
+        basestr = f'ch{samp_noext}->Add("'+basedir
+        files_kept = files_to_use(samp, files, period)
+        #print(files_kept)
+        for f in files_kept:
+        	out[cat] += '/'.join([basestr, f+'");\n']);
+        out[cat] += '\n'
+        if '2018' in period:
+            out[cat] += f'ScanChain(ch{samp_noext}, sample_str{samp_noext}, "{plotDir}", "{rootDir}");\n\n'
+    # out["Data"] += f'// chain for Data\n'
+    # out["Data"] += f'TChain *chData = new TChain("Events");\n'
+    # out["Data"] += f'std::string sample_strData("Data");\n'
 
     # for sample in samples:
     #     samp = sample.split('/')[-1]
@@ -111,52 +144,22 @@ def main():
     #     if cat == 'Ignore': continue
 
     #     period = sample.split('/')[0]
-    #     if '2016_APV' in period:
-    #         out[cat] += f'// chain for {samp}\n'
-    #         out[cat] += f'TChain *ch{samp_noext} = new TChain("Events");\n'
-    #         out[cat] += f'std::string sample_str{samp_noext}("{samp}");\n'
+    #     #if '2016_APV' in period:
 
     #     out[cat] += '\n'
     #     out[cat] += f'// files for {samp} {period}\n'
 
-    #     basestr = f'ch{samp_noext}->Add("'+basedir
+    #     basestr = f'chData->Add("'+basedir
     #     files_kept = files_to_use(samp, files, period)
     #     #print(files_kept)
     #     for f in files_kept:
     #     	out[cat] += '/'.join([basestr, f+'");\n']);
     #     out[cat] += '\n'
-    #     if '2018' in period:
-    #         out[cat] += f'ScanChain(ch{samp_noext}, sample_str{samp_noext});\n\n'
-    out["Data"] += f'// chain for Data\n'
-    out["Data"] += f'TChain *chData = new TChain("Events");\n'
-    out["Data"] += f'std::string sample_strData("Data");\n'
-
-    # define where the output files go
-    rootDir = 'outputs/data'
-    subprocess.run(["mkdir -p ../cpp/"+rootDir],shell=True)
-    for sample in samples:
-        samp = sample.split('/')[-1]
-        samp_noext = samp.replace("_ext","")
-        cat = get_category(samp, sample_map)
-        if cat == 'Ignore': continue
-
-        period = sample.split('/')[0]
-        #if '2016_APV' in period:
-
-        out[cat] += '\n'
-        out[cat] += f'// files for {samp} {period}\n'
-
-        basestr = f'chData->Add("'+basedir
-        files_kept = files_to_use(samp, files, period)
-        #print(files_kept)
-        for f in files_kept:
-        	out[cat] += '/'.join([basestr, f+'");\n']);
-        out[cat] += '\n'
-        #if '2018' in period:
-    out["Data"] += f'ScanChain(chData, sample_strData, "{plotDir}", "{rootDir}");\n\n'
+    #     #if '2018' in period:
+    # out["Data"] += f'ScanChain(chData, sample_strData, "{plotDir}", "{rootDir}");\n\n'
 
 
-    with open(f'../cpp/doAll_data_Run2_t.C','w') as fi:
+    with open(f'../cpp/doAll_mc_Run2_t.C','w') as fi:
         fi.write('{\n')
         fi.write('gROOT->ProcessLine(".L analyze_bjets.C+");\n\n')
         for cat in out.keys():

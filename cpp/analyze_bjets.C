@@ -156,11 +156,18 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   legend->SetFillColor(0);
   legend->SetFillStyle(0);
   legend->AddEntry(h_data, "Observed", "ep");
-  legend->AddEntry(h_mc, "MC", "f");
+  //legend->AddEntry(h_mc, "MC", "f");
 
 
   // TODO: fill in the MC components in legend
-  // also compute the size of the legend based on the number of entries
+  TList *histos = hs->GetHists();
+  TIter next(histos);
+  TH1 *histo;
+  while ((histo = (TH1*)next())) {
+      legend->AddEntry(histo, histo->GetXaxis()->GetTitle(), "f");
+  }
+
+  // TODO: compute the size of the legend based on the number of entries
   // ymin = ymax - (entry_size)*n_entries
 
   legend->Draw();
@@ -266,7 +273,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
      * Ht for all jets, bjets, and non-bjets
     */
 
-//    std::cout << "1" << endl;
+    std::cout << "1" << endl;
     int const njet_nbin = 7;
     H1(njet,njet_nbin,0,njet_nbin);
 //    std::cout << "2" << endl;
@@ -308,44 +315,44 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     // set up branches
 
-    double event_wgt;
+    float event_wgt;
     ch->SetBranchAddress("event_wgt", &event_wgt);
 
-    float event_weight_triggers_dilepton_matched;
-    ch->SetBranchAddress("event_weight_triggers_dilepton_matched", &event_weight_triggers_dilepton_matched);
+    float event_wgt_triggers_dilepton_matched;
+    ch->SetBranchAddress("event_wgt_triggers_dilepton_matched", &event_wgt_triggers_dilepton_matched);
+
+    float event_wgt_SFs_btagging;
+    ch->SetBranchAddress("event_wgt_SFs_btagging", &event_wgt_SFs_btagging);
 
     unsigned int njet;
-    ch->SetBranchAddress("njet", &njet);
-//    std::cout << "3" << endl;
+    ch->SetBranchAddress("nak4jets_tight_pt25", &njet);
+    std::cout << "3" << endl;
 
     unsigned int nbjet;
-    ch->SetBranchAddress("nbjet", &nbjet);
-//    std::cout << "4" << endl;
+    ch->SetBranchAddress("nak4jets_tight_pt25_btagged", &nbjet);
+    std::cout << "4" << endl;
 
-    double PFMET_pt_final;
-    ch->SetBranchAddress("PFMET_pt_final", &PFMET_pt_final);
-//    std::cout << "5" << endl;
+    float PFMET_pt_final;
+    ch->SetBranchAddress("pTmiss", &PFMET_pt_final);
 
     std::vector<float> *jet_pt = 0;
-    ch->SetBranchAddress("jet_pt", &jet_pt);
-//    std::cout << "6" << endl;
+    ch->SetBranchAddress("ak4jets_pt", &jet_pt);
 
     std::vector<bool> *jet_is_btagged = 0;
-    ch->SetBranchAddress("jet_is_btagged", &jet_is_btagged);
-//    std::cout << "7" << endl;
+    ch->SetBranchAddress("ak4jets_is_btagged", &jet_is_btagged);
 
     // add lepton variables pt, eta, phi, m
     std::vector<float> *lep_pt = 0;
-    ch->SetBranchAddress("lep_pt", &lep_pt);
+    ch->SetBranchAddress("leptons_pt", &lep_pt);
 
     std::vector<float> *lep_eta = 0;
-    ch->SetBranchAddress("lep_eta", &lep_eta);
+    ch->SetBranchAddress("leptons_eta", &lep_eta);
 
     std::vector<float> *lep_phi = 0;
-    ch->SetBranchAddress("lep_phi", &lep_phi);
+    ch->SetBranchAddress("leptons_phi", &lep_phi);
 
     std::vector<float> *lep_mass = 0;
-    ch->SetBranchAddress("lep_mass", &lep_mass);
+    ch->SetBranchAddress("leptons_mass", &lep_mass);
 
     float min_mbb;
     ch->SetBranchAddress("min_mbb", &min_mbb);
@@ -383,25 +390,25 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     
       // Fill histograms
       if (PFMET_pt_final > 50.) {
-        h_njet->Fill(njet_ct, event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_weight_triggers_dilepton_matched);
-        h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_weight_triggers_dilepton_matched);
+        h_njet->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        // TODO: add njet with nb=2, nb>2, and add nb plot
+        h_lep1_pt->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_lep1_eta->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_lep1_phi->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_lep2_pt->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_lep2_eta->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_lep2_phi->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
     
         // dilepton hists
-        h_m_ll->Fill(dilep.M(), event_wgt * event_weight_triggers_dilepton_matched);
-        h_pt_ll->Fill(dilep.Pt(), event_wgt * event_weight_triggers_dilepton_matched);
-        h_m_lb->Fill(min_mlb, event_wgt * event_weight_triggers_dilepton_matched);
-        h_m_bb->Fill(min_mbb, event_wgt * event_weight_triggers_dilepton_matched);
+        h_m_ll->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_pt_ll->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_m_lb->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_m_bb->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
     }
-    h_met->Fill(PFMET_pt_final, event_wgt * event_weight_triggers_dilepton_matched);
-    h_Ht->Fill(Ht, event_wgt * event_weight_triggers_dilepton_matched);
+    h_met->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+    h_Ht->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
     }
 
-//    std::cout << "13" << endl;
 
     const int num_histograms = 9;
     TH1F* histograms[num_histograms] = {h_njet, h_met, h_Ht, h_lep1_pt, h_lep1_eta, h_lep1_phi, h_lep2_pt, h_lep2_eta, h_lep2_phi};
@@ -415,10 +422,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     }
 
 
-//    std::cout << "15" << endl;
 
     bar.finish();
-//    std::cout << "16" << endl;
 
     // save histograms as png, pdf, and root files
     plotVariable("njet", h_njet, sample_str, plotDir);
@@ -435,7 +440,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     plotVariable("M_{lb}", h_m_lb, sample_str, plotDir);
     plotVariable("M_{bb}", h_m_bb, sample_str, plotDir);
 
-//    std::cout << "20" << endl;
+    std::cout << "20" << endl;
     // save histograms to root file
     string outfile_name = rootDir + "/hists_";
     outfile_name += sample_str;
@@ -458,6 +463,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     h_m_ll->Write();
     h_m_lb->Write();
     h_m_bb->Write();
+    std::cout << "472" << endl;
 
     f->Write();
     f->Close();
@@ -634,14 +640,13 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     //hs->GetYaxis()->SetTitle("Events");
 
     // fill the legend in reverse order
+    leg->AddEntry(h_data, "data", "lep");
     for(int i = hists_sorted.size() - 1; i >= 0; i--){
         leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
     }
     // then Others
     leg->AddEntry(h_Others, "Others", "f");
 
-    // data last    
-    leg->AddEntry(h_data, "data", "lep");
 
     // draw the data histogram
     h_data->SetMarkerStyle(20);
