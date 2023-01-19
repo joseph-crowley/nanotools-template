@@ -561,174 +561,165 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // get the histogram name in latex format
     string hname_latex = getHistogramName(hname);
 
-    for (unsigned int i=0; i<3; i++){ 
-      /* name the categories lt2 eq2 gt2 */ 
-      std::string catname = hname; 
-      if (catname == "nbjet") { if (i>0) break;} 
-      else {
-        if (i==0) catname += "_nb_lt2"; 
-        else if (i==1) catname += "_nb_eq2"; 
-        else if (i==2) catname += "_nb_gt2"; 
-      }
+    // create a vector of histograms and legend entries
+    // separate data and Others
+    TH1F* h_data = NULL;
+    string entry_data;
+    TH1F* h_Others = NULL;
+    string entry_Others;
+    vector<TH1F*> hists;
+    vector<string> legend_entries;
+    for(int i = 0; i < rootFiles.size(); i++){
+        TFile* f = new TFile(rootFiles[i].data());
+        TH1F* h = (TH1F*)f->Get(hname.data());
 
-      // separate data and Others
-      TH1F* h_data = NULL;
-      string entry_data;
-      TH1F* h_Others = NULL;
-      string entry_Others;
-      vector<TH1F*> hists;
-      vector<string> legend_entries;
-      for(int i = 0; i < rootFiles.size(); i++){
-          TFile* f = new TFile(rootFiles[i].data());
-          TH1F* h = (TH1F*)f->Get(catname.data());
+        // create a vector of legend entries from the root file names
+        
+        // for data
+        // remove the path and the .root extension
+        if (rootFiles[i].find("data") != string::npos){
+            string entry = rootFiles[i];
+            entry.erase(0, entry.find_last_of("/")+1);
+            entry.erase(entry.find_last_of("."), entry.size());
+            h_data = h;
+            entry_data = entry;
+            continue;
+        }
+        // for Others
+        if (rootFiles[i].find("Others") != string::npos){
+            string entry = rootFiles[i];
+            entry.erase(0, entry.find_last_of("/")+1);
+            entry.erase(entry.find_last_of("."), entry.size());
+            h_Others = h;
+            entry_Others = entry;
+            continue;
+        }
 
-          // create a vector of legend entries from the root file names
-          
-          // for data
-          // remove the path and the .root extension
-          if (rootFiles[i].find("data") != string::npos){
-              string entry = rootFiles[i];
-              entry.erase(0, entry.find_last_of("/")+1);
-              entry.erase(entry.find_last_of("."), entry.size());
-              h_data = h;
-              entry_data = entry;
-              continue;
-          }
-          // for Others
-          if (rootFiles[i].find("Others") != string::npos){
-              string entry = rootFiles[i];
-              entry.erase(0, entry.find_last_of("/")+1);
-              entry.erase(entry.find_last_of("."), entry.size());
-              h_Others = h;
-              entry_Others = entry;
-              continue;
-          }
+        // for MC
+        // remove the path and the .root extension
+        // and remove 'hists_' or 'output_'
+        string entry = rootFiles[i];
+        entry.erase(0, entry.find_last_of("/")+1);
+        entry.erase(entry.find_last_of("."), entry.size());
+        if(entry.find("hists_") != string::npos){
+            entry.erase(0, entry.find("hists_")+6);
+        }
+        else if(entry.find("output_") != string::npos){
+            entry.erase(0, entry.find("output_")+7);
+        }
 
-          // for MC
-          // remove the path and the .root extension
-          // and remove 'hists_' or 'output_'
-          string entry = rootFiles[i];
-          entry.erase(0, entry.find_last_of("/")+1);
-          entry.erase(entry.find_last_of("."), entry.size());
-          if(entry.find("hists_") != string::npos){
-              entry.erase(0, entry.find("hists_")+6);
-          }
-          else if(entry.find("output_") != string::npos){
-              entry.erase(0, entry.find("output_")+7);
-          }
-
-          hists.push_back(h);
-          legend_entries.push_back(entry);
-      }
-
-      // sort the hists by integral
-      // smallest integral on top
-      // keep track of the indices of the sorted histograms
-      // by using a vector of pairs
-      vector<pair<int, TH1F*> > hists_sorted = hists.copy();
-      //for(int i = 0; i < hists.size(); i++){
-      //    hists_sorted.push_back(make_pair(i, hists[i]));
-      //}
-      //sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
-
-      // create a vector of colors hopefully larger than the number of histograms
-      vector<int> colors;
-      colors.push_back(kRed);
-      colors.push_back(kViolet);
-      colors.push_back(kGreen);
-      colors.push_back(kOrange);
-      colors.push_back(kMagenta);
-      colors.push_back(kCyan);
-
-      // stack the histograms and make a plot
-      TCanvas *c = new TCanvas(catname.data(),"", 1000,800);
-      c->cd();
-      THStack *hs = new THStack(catname.data(),"");
-      TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
-
-      // add the Others histogram first
-      h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
-      h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
-      h_Others->SetLineWidth(1);
-      h_Others->SetFillStyle(3001);
-      h_Others->GetXaxis()->SetTitle("");
-      hs->Add(h_Others);
-
-      for(int i = 0; i < hists_sorted.size(); i++){
-          // there may be more hists than colors
-          // so use the modulo operator to cycle through the colors
-          // set line color slightly lighter than fill color
-          hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
-          hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
-          hists_sorted[i].second->SetLineWidth(1);
-          hists_sorted[i].second->SetFillStyle(3001);
-          hists_sorted[i].second->GetXaxis()->SetTitle("");
-          hs->Add(hists_sorted[i].second);
-      }
-
-
-      // compute the min and max for hs
-      hs->SetMinimum(1e-1);
-      hs->SetMaximum(3e5);
-      hs->Draw("hist");
-      //hs->GetXaxis()->SetTitle(hname_latex.data());
-      //hs->GetYaxis()->SetTitle("Events");
-
-      // fill the legend in reverse order
-      leg->AddEntry(h_data, "data", "lep");
-      for(int i = hists_sorted.size() - 1; i >= 0; i--){
-          leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
-      }
-      // then Others
-      leg->AddEntry(h_Others, "Others", "f");
-
-
-      // draw the data histogram
-      h_data->SetMarkerStyle(20);
-      h_data->SetMarkerSize(1.2);
-      h_data->SetLineWidth(2);
-      h_data->SetLineColor(kBlack);
-      h_data->Draw("e1psame");
-
-      leg->Draw();
-      c->SetLogy();
-
-
-
-      // save the plot
-      string plotName = plotDir + "/";
-      plotName += catname;
-      plotName += "_stack.pdf";
-      c->SaveAs(plotName.data());
-
-      plotName = plotDir + "/";
-      plotName += catname;
-      plotName += "_stack.png";
-      c->SaveAs(plotName.data());
-
-      // save the stacked histograms to a root file
-      string outfile_name = plotDir + "/";
-      outfile_name += catname;
-      outfile_name += "_stack.root";
-      TFile* f = new TFile(outfile_name.data(), "RECREATE");
-      hs->Write();
-      f->Write();
-      f->Close();
-
-      makeRatioPlot(hs, h_data, catname, plotDir);
-
-      // clean up memory
-      delete c;
-      delete f;
-      delete hs;
-      delete leg;
-      for(int i = 0; i < hists.size(); i++){
-          delete hists[i];
-      }
-      hists.clear();
-      hists_sorted.clear();
-      legend_entries.clear();
-      colors.clear();
+        hists.push_back(h);
+        legend_entries.push_back(entry);
     }
+
+    // sort the hists by integral
+    // smallest integral on top
+    // keep track of the indices of the sorted histograms
+    // by using a vector of pairs
+    vector<pair<int, TH1F*> > hists_sorted;
+    for(int i = 0; i < hists.size(); i++){
+        hists_sorted.push_back(make_pair(i, hists[i]));
+    }
+    sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
+
+    // create a vector of colors hopefully larger than the number of histograms
+    vector<int> colors;
+    colors.push_back(kRed);
+    colors.push_back(kViolet);
+    colors.push_back(kGreen);
+    colors.push_back(kOrange);
+    colors.push_back(kMagenta);
+    colors.push_back(kCyan);
+
+    // stack the histograms and make a plot
+    TCanvas *c = new TCanvas(hname.data(),"", 1000,800);
+    c->cd();
+    THStack *hs = new THStack(hname.data(),"");
+    TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
+
+    // add the Others histogram first
+    h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
+    h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
+    h_Others->SetLineWidth(1);
+    h_Others->SetFillStyle(3001);
+    h_Others->GetXaxis()->SetTitle("");
+    hs->Add(h_Others);
+
+    for(int i = 0; i < hists_sorted.size(); i++){
+        // there may be more hists than colors
+        // so use the modulo operator to cycle through the colors
+        // set line color slightly lighter than fill color
+        hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
+        hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
+        hists_sorted[i].second->SetLineWidth(1);
+        hists_sorted[i].second->SetFillStyle(3001);
+        hists_sorted[i].second->GetXaxis()->SetTitle("");
+        hs->Add(hists_sorted[i].second);
+    }
+
+
+    // compute the min and max for hs
+    hs->SetMinimum(1e-1);
+    hs->SetMaximum(3e5);
+    hs->Draw("hist");
+    //hs->GetXaxis()->SetTitle(hname_latex.data());
+    //hs->GetYaxis()->SetTitle("Events");
+
+    // fill the legend in reverse order
+    leg->AddEntry(h_data, "data", "lep");
+    for(int i = hists_sorted.size() - 1; i >= 0; i--){
+        leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
+    }
+    // then Others
+    leg->AddEntry(h_Others, "Others", "f");
+
+
+    // draw the data histogram
+    h_data->SetMarkerStyle(20);
+    h_data->SetMarkerSize(1.2);
+    h_data->SetLineWidth(2);
+    h_data->SetLineColor(kBlack);
+    h_data->Draw("e1psame");
+
+    leg->Draw();
+    c->SetLogy();
+
+
+
+    // save the plot
+    string plotName = plotDir + "/";
+    plotName += hname;
+    plotName += "_stack.pdf";
+    c->SaveAs(plotName.data());
+
+    plotName = plotDir + "/";
+    plotName += hname;
+    plotName += "_stack.png";
+    c->SaveAs(plotName.data());
+
+    // save the stacked histograms to a root file
+    string outfile_name = plotDir + "/";
+    outfile_name += hname;
+    outfile_name += "_stack.root";
+    TFile* f = new TFile(outfile_name.data(), "RECREATE");
+    hs->Write();
+    f->Write();
+    f->Close();
+
+    makeRatioPlot(hs, h_data, hname, plotDir);
+
+    // clean up memory
+    delete c;
+    delete f;
+    delete hs;
+    delete leg;
+    for(int i = 0; i < hists.size(); i++){
+        delete hists[i];
+    }
+    hists.clear();
+    hists_sorted.clear();
+    legend_entries.clear();
+    colors.clear();
+
     return 0;
 }
