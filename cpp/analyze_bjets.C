@@ -580,7 +580,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
       vector<string> legend_entries;
       for(int i = 0; i < rootFiles.size(); i++){
           TFile* f = new TFile(rootFiles[i].data());
-          TH1F* h = (TH1F*)f->Get(catname.data()).at(i);
+          TH1F* h = (TH1F*)f->Get(catname.data());
 
           // create a vector of legend entries from the root file names
           
@@ -625,11 +625,11 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
       // smallest integral on top
       // keep track of the indices of the sorted histograms
       // by using a vector of pairs
-      vector<pair<int, TH1F*> > hists_sorted;
-      for(int i = 0; i < hists.size(); i++){
-          hists_sorted.push_back(make_pair(i, hists[i]));
-      }
-      sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
+      vector<pair<int, TH1F*> > hists_sorted = hists.copy();
+      //for(int i = 0; i < hists.size(); i++){
+      //    hists_sorted.push_back(make_pair(i, hists[i]));
+      //}
+      //sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
 
       // create a vector of colors hopefully larger than the number of histograms
       vector<int> colors;
