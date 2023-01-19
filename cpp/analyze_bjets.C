@@ -60,7 +60,7 @@ using namespace std;
 //using namespace tas;
 
 string getHistogramName(string hname){
-    std::cout << "getHistogramName" << endl;
+    //std::cout << "getHistogramName" << endl;
     // get the sample name from the root file name
     // remove the path and the .root extension
     string hname_latex = "";
@@ -114,7 +114,7 @@ string getHistogramName(string hname){
 }
 
 void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string plotDir) {
-    std::cout << "Plot Variable" << endl;
+    //std::cout << "Plot Variable" << endl;
     for (auto const& h_var: h_vars){
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
       varPlot->cd();
@@ -136,7 +136,7 @@ void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string pl
 }
 
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
-  std::cout << "Make Ratio Plot" << endl;
+  //std::cout << "Make Ratio Plot" << endl;
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
@@ -268,7 +268,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   tex->DrawLatex(0.15, 0.75, cut_string.c_str());
 
   // save the plot to file
-  std::cout << plotDir << "/" << canvasname << endl;
+  //std::cout << plotDir << "/" << canvasname << endl;
  
   plot.save(plotDir, "png"); 
   plot.save(plotDir, "pdf"); 
@@ -276,7 +276,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
  
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
-    std::cout << "ScanChain" << std::endl;
+    //std::cout << "ScanChain" << std::endl;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
     TObjArray *listOfFiles = ch->GetListOfFiles();
@@ -292,7 +292,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
      * Ht for all jets, bjets, and non-bjets
     */
 
-    std::cout << "Making histograms" << std::endl;
+    //std::cout << "Making histograms" << std::endl;
     int const njet_nbin = 7;
     H1vec(njet,njet_nbin,0,njet_nbin);
 
@@ -336,7 +336,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     H1vec(m_bb,m_bb_nbin,0,1000);
 
     // set up branches
-    std::cout << "Setting up branches" << std::endl;
+    //std::cout << "Setting up branches" << std::endl;
 
     float event_wgt;
     ch->SetBranchAddress("event_wgt", &event_wgt);
@@ -349,11 +349,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     unsigned int njet;
     ch->SetBranchAddress("nak4jets_tight_pt25", &njet);
-    std::cout << "3" << endl;
+    //std::cout << "3" << endl;
 
     unsigned int nbjet;
     ch->SetBranchAddress("nak4jets_tight_pt25_btagged", &nbjet);
-    std::cout << "4" << endl;
+    //std::cout << "4" << endl;
 
     float PFMET_pt_final;
     ch->SetBranchAddress("pTmiss", &PFMET_pt_final);
@@ -405,7 +405,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         if (pt > pt_threshold) Ht += pt;
         if (!is_btagged) njet_ct++;
       }
-      std::cout << "5" << endl;
+      //std::cout << "5" << endl;
       TLorentzVector lep1;
       lep1.SetPtEtaPhiM(lep_pt->at(0), lep_eta->at(0), lep_phi->at(0), lep_mass->at(0));
       TLorentzVector lep2;
@@ -413,10 +413,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       TLorentzVector dilep = lep1 + lep2;
     
       // Fill histograms
-      std::cout << "Filling histograms" << endl;
+      //std::cout << "Filling histograms" << endl;
       if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
       for (unsigned int i_bjet = 0; i_bjet < 3; i_bjet++){
-        std::cout << "Filling histograms: " << i_bjet << endl;
+        //std::cout << "Filling histograms: " << i_bjet << endl;
         // lt2 eq2 gt2 
         if ((i_bjet == 0) && (nbjet >= 2)) continue;
         if ((i_bjet == 1) && (nbjet != 2)) continue;
@@ -443,7 +443,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       }
     }
 
-    std::cout << "rebinning histograms" << endl;
+    //std::cout << "rebinning histograms" << endl;
     std::vector<std::vector<TH1F *> *> histograms {&h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
     
     for (int i = 0; i < histograms.size(); i++) {
@@ -472,7 +472,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     plotVariable(h_m_lb, sample_str, plotDir);
     plotVariable(h_m_bb, sample_str, plotDir);
 
-    std::cout << "20" << endl;
+    //std::cout << "20" << endl;
     // save histograms to root file
     string outfile_name = rootDir + "/hists_";
     outfile_name += sample_str;
@@ -497,9 +497,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
    WRITE_HISTOGRAM(h_m_lb)\
    WRITE_HISTOGRAM(h_m_bb)
 
-#define WRITE_HISTOGRAM(name) for (auto& h: name) std::cout << "will write " << h->GetName() << std::endl;
-WRITE_HISTOGRAMS
-#undef WRITE_HISTOGRAM 
+//#define WRITE_HISTOGRAM(name) for (auto& h: name) std::cout << "will write " << h->GetName() << std::endl;
+//WRITE_HISTOGRAMS
+//#undef WRITE_HISTOGRAM 
 
 #define WRITE_HISTOGRAM(name) for (auto& h: name) {f->WriteTObject(h); delete h;}
 WRITE_HISTOGRAMS
