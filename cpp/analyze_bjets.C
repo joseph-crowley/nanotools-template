@@ -67,6 +67,9 @@ string getHistogramName(string hname){
     if(hname == "njet"){
         hname_latex = "n_{jet}";
     }  
+    else if(hname == "nbjet"){
+        hname_latex = "n_{b}";
+    }  
     else if(hname == "met"){
         hname_latex = "p_{T}^{miss} [GeV]";
     }
