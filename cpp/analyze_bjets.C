@@ -32,7 +32,6 @@ using namespace PlottingHelpers;
 #define COUNT_GT(vec,num) std::count_if((vec).begin(), (vec).end(), [](float x) { return x > (num); });
 #define COUNT_LT(vec,num) std::count_if((vec).begin(), (vec).end(), [](float x) { return x < (num); });
 
-std::cout << "H1 def" << endl;
 #define H1(name,nbins,low,high) TH1F *h_##name = new TH1F(#name,#name,nbins,low,high);
 #define H1vec(name,nbins,low,high) \
   std::vector<TH1F *> h_##name ; \
@@ -44,7 +43,7 @@ std::cout << "H1 def" << endl;
       if (i==0) catname += "_nb_lt2"; \
       else if (i==1) catname += "_nb_eq2"; \
       else if (i==2) catname += "_nb_gt2"; \
-    }
+    }\
     h_##name.push_back(new TH1F(catname.c_str(),catname.c_str(),nbins,low,high)); \
   }
 
@@ -124,12 +123,12 @@ void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string pl
       h_var->Draw();
       varPlot->SetLogy();
   
-      string varPlotName = plotDir + "/" + varName + "_";
+      string varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
       varPlotName += ".pdf";
       varPlot->SaveAs(varPlotName.data());
 
-      varPlotName = plotDir + "/" + varName + "_";
+      varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
       varPlotName += ".png";
       varPlot->SaveAs(varPlotName.data());
@@ -483,9 +482,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     TFile* f = new TFile(outfile_name.data(), "RECREATE");
 
 #define WRITE_HISTOGRAMS \
-   WRITE_HISTOGRAM(h_nbjet) \  
-   WRITE_HISTOGRAM(h_njet) \   
-   WRITE_HISTOGRAM(h_met) \
+   WRITE_HISTOGRAM(h_nbjet)\
+   WRITE_HISTOGRAM(h_njet)\
+   WRITE_HISTOGRAM(h_met)\
    WRITE_HISTOGRAM(h_Ht)\
    WRITE_HISTOGRAM(h_lep1_pt)\
    WRITE_HISTOGRAM(h_lep1_eta)\
@@ -502,30 +501,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 WRITE_HISTOGRAMS
 #undef WRITE_HISTOGRAM 
 
-#define WRITE_HISTOGRAM(name) for (auto& h: name) h->Write();
+#define WRITE_HISTOGRAM(name) for (auto& h: name) {f->WriteTObject(h); delete h;}
 WRITE_HISTOGRAMS
 #undef WRITE_HISTOGRAM 
 #undef WRITE_HISTOGRAMS
 
-    f->Write();
     f->Close();
-
-    // clean up memory
-    delete f;
-    delete h_njet;
-    delete h_met;
-    delete h_Ht;
-    delete h_lep1_pt;
-    delete h_lep1_eta;
-    delete h_lep1_phi;
-    delete h_lep2_pt;
-    delete h_lep2_eta;
-    delete h_lep2_phi;
-    delete h_pt_ll;
-    delete h_m_ll;
-    delete h_m_lb;
-    delete h_m_bb;
-
     return 0;
 }
 
