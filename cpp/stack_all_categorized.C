@@ -15,7 +15,7 @@ rootFiles.push_back("outputs/mc/hists_TTV.root");
 rootFiles.push_back("outputs/mc/hists_ST_tW.root");
 rootFiles.push_back("outputs/mc/hists_WW.root");
 rootFiles.push_back("outputs/mc/hists_Others.root");
-//rootFiles.push_back("outputs/data/hists_Data_Run2.root");
+rootFiles.push_back("outputs/data/hists_Data_Run2.root");
 
 stackHists("nbjet", rootFiles, dirName);
 stackHists("njet_nb_lt2", rootFiles, dirName);
