@@ -1,176 +1,113 @@
 from collections import Counter
-import string
 import json
 import subprocess
+import os
+import shutil
+from pprint import pprint
 
-with open('sample_map.json','r') as f:
-    sample_map_inv = json.load(f)
+# plotdir is where the plots go
+# skimdir is where the skim is
+# rootdir is where the output root files go
+PLOTDIR = '../cpp/outputs/plots'
+SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
+ROOTDIR = '../cpp/outputs/mc'
 
-sample_map = {}
-for k,l in sample_map_inv.items():
-    for s in l:
-        sample_map[s] = k
+def create_file(dictionary, filename = "doAll_t.C", filepath = ""):
+    if filepath:
+        file_path = os.path.join(filepath, filename)
+    else:
+        file_path = filename
+    try:
+        if os.path.isfile(file_path):
+            shutil.copy2(file_path, file_path+".bak")
+            print(f'{file_path} already exists, a backup was created at {file_path}.bak and the original will be overwritten.')
+        with open(file_path, "w") as file:
+            file.write("{\n")
+            file.write("    gROOT->ProcessLine(\".L analyze_bjets.C+\");\n")
+            for category, string in sorted(dictionary.items()):
+                file.write("\n")
+                file.write("    // Category {}\n".format(category))
+                file.write("{}\n".format(string))
+            file.write("}\n")
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
-def get_category(samp, sample_map):
-    if 'Run20' in samp: return 'Data'
-    base_sample = samp.replace('_ext','')
+def load_sample_map():
+    with open('sample_map.json','r') as f:
+        sample_map = json.load(f)
+    sample_map_inv = {}
+    for k,l in sample_map.items():
+        for s in l:
+            sample_map_inv[s] = k
+    return sample_map, sample_map_inv
+
+_, sample_map = load_sample_map()
+
+def get_category(base_sample, sample_map):
+    if 'Run20' in base_sample: return 'Data'
     if base_sample in sample_map.keys():
         return sample_map[base_sample]
     return 'Ignore'
 
-def get_all_files(periods = [], SKIMDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"):
-    cmd = f'ls {SKIMDIR}'
+def get_all_files(skim_dir):
+    cmd = f'ls {skim_dir}'
     periods = subprocess.check_output(cmd, shell=True).decode('ascii').split('\n')[:-1]
-    
-    fi = {}
+    files = []
     for p in periods:
-        cmd = f'ls {SKIMDIR}/{p}'
-        fi[p] = subprocess.check_output(cmd, shell=True).decode('ascii').split('\n')[:-1]
-    return [p+'/'+fipp for p, fip in fi.items() for fipp in fip]
+        cmd = f'ls {skim_dir}/{p}'
+        files += [f"{p}/{f}" for f in subprocess.check_output(cmd, shell=True).decode('ascii').split('\n')[:-1]]
+    return files
 
-def files_to_use(samp, files, period):    
-    ftu = []
-    if 'ext' in samp:
-        for f in files: 
-            if samp in f and period in f: 
-                ftu.append(f) 
-        return ftu
+def files_to_use(sample, files, period):
+    sample_name = '_'.join(sample.split("/")[-1].split("_")[0:-3])
+    return [f for f in files if f.startswith(f"{period}/{sample_name}")]
 
-    for f in files:
-        if 'ext' not in f and samp in f and period in f:
-            ftu.append(f) 
-    return ftu
+def create_output_dictionary(categories):
+    return {category: "" for category in categories}
+
+def generate_doall_script(category, files, plot_directory, basedir, rootdir):
+    if category == 'Ignore':
+        return
+    print(f'\n\n\n')
+    print(f'generate_doall_script({category}, {files[:2]}, "{plot_directory}", "{basedir}", "{rootdir}")')
+    out = ""
+    indent = "    "
+    chains = set()
+    for sample in files:
+        files_used = set()
+        name_with_wildcard = "_".join(sample.split("_")[:-3] + ["*"] + sample.split("_")[-1:])
+        if name_with_wildcard in files_used: continue
+        files_used.add(name_with_wildcard)
+        period = sample.split('/')[0]
+        samp = '_'.join(sample.split("/")[-1].split("_")[0:-3])
+        samp_noext = samp.replace("_ext","")
+        if category not in chains:
+            chains.add(category)
+            out += indent + f'std::string FILEDIR = "{basedir}";\n'
+            out += indent + f'TChain *ch{category} = new TChain("Events");\n'
+            out += indent + f'std::string sample_str{category}("{samp}");\n'
+        basestr = f'ch{category}->Add(FILEDIR + "'
+        # add the wild card to reduce the output
+        out += indent + f'{basestr}/{name_with_wildcard}");\n'
+    out += indent + f'ScanChain(ch{category}, sample_str{category}, "{plot_directory}", "{rootdir}");\n\n'
+    return ''.join(out)
 
 def main():
-    periods = ['2016_NonAPV','2016_APV', '2017','2018']
-    categories = list(sample_map_inv.keys())
+    categories = set(sample_map.values())
+    files = get_all_files(SKIMDIR)
+    output_dict = create_output_dictionary(categories)
+    samples = {}
+    for category in categories:
+        samples.update({category:[]})
+        for f in files:
+            base_sample = "_".join(f.split('/')[-1].replace("_ext","").split("_of")[0].split("_")[:-1])
+            cat = get_category(base_sample, sample_map)
+            if cat == category:
+                samples[cat].append(f)
+        output_dict[category] = generate_doall_script(category, samples[category], PLOTDIR, SKIMDIR, ROOTDIR)
 
-    # where to send the plots
-    plotDir = '/home/users/crowley/public_html/test'
-    out = dict().fromkeys(categories,'')
-    out['Others'] = ''
-    ## only need the following if separating categories into files
-    # for cat in out.keys():
-    #     out[cat] += '{\n'
-    #     out[cat] += 'gROOT->ProcessLine(".L analyze_bjets.C+");\n'
-    #     out[cat] += 'TChain *ch = new TChain("Events");\n\n'
+    create_file(output_dict, filename = "doAll_test.C", filepath = ".")
 
-    # create a doAll script for each category
-
-    
-    new_samples = Counter()
-    files = sorted(get_all_files())
-    
-    # tt, tW, qqtoWW, Others
-    # be sure not to double count. that's why we have ext or no ext
-    # ttZ has different modes, some overlap. check the names, should be obvious
-    
-    for sample in files:
-        if not sample: continue
-        keep = '';
-        if 'ext' in sample: 
-            keep += sample.split('ext')[0]
-            keep += 'ext'
-        else: 
-            keep += '_'.join(sample.split('of')[:-1][0].split('_')[:-2])
-   
-        new_samples.update([keep.strip('_')])
-    
-    sorted_samples = sorted(list(new_samples.items()), key = lambda x: x[0].replace('_ext',''))
-
-    chosen_samples = {}
-    for name, count in sorted_samples:
-        search_name = name.replace('_ext','')
-        if name+'_ext' in chosen_samples:
-             nm = name+'_ext'
-             ct = chosen_samples[name+'_ext']
-        elif name[:-4] in chosen_samples:
-             nm = name[:-4]
-             ct = chosen_samples[name[:-4]]
-        else:
-            chosen_samples.update({name:count})
-            ct = count
-
-        if ct < count:
-            del chosen_samples[nm]
-            chosen_samples.update({name:count})
-        
-    #with open(f'chosen_samples_{period}.json','w') as f:
-    #    json.dump(chosen_samples, f, indent=4)
-    
-    samples = sorted(list(chosen_samples.keys()),key= lambda x: x.split('/')[-1])
-    print(f'chosen samples: \n{json.dumps(samples,indent=4)}')
-    
-    # write a line for a doAll script 
-    basedir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC'
-
-    # define where the output files go
-    rootDir = 'outputs/mc'
-    subprocess.run(["mkdir -p ../cpp/"+rootDir],shell=True)
-
-    chains = []
-    for sample in samples:
-        samp = sample.split('/')[-1]
-        samp_noext = samp.replace("_ext","")
-        cat = get_category(samp, sample_map)
-        if cat == 'Ignore': continue
-
-        period = sample.split('/')[0]
-        if samp_noext not in chains:
-            chains.append(samp_noext)
-            out[cat] += f'// chain for {samp}\n'
-            out[cat] += f'TChain *ch{samp_noext} = new TChain("Events");\n'
-            out[cat] += f'std::string sample_str{samp_noext}("{samp}");\n'
-
-        out[cat] += '\n'
-        out[cat] += f'// files for {samp} {period}\n'
-
-        basestr = f'ch{samp_noext}->Add("'+basedir
-        files_kept = files_to_use(samp, files, period)
-        #print(files_kept)
-        for f in files_kept:
-        	out[cat] += '/'.join([basestr, f+'");\n']);
-        out[cat] += '\n'
-        if '2018' in period:
-            out[cat] += f'ScanChain(ch{samp_noext}, sample_str{samp_noext}, "{plotDir}", "{rootDir}");\n\n'
-    # out["Data"] += f'// chain for Data\n'
-    # out["Data"] += f'TChain *chData = new TChain("Events");\n'
-    # out["Data"] += f'std::string sample_strData("Data");\n'
-
-    # for sample in samples:
-    #     samp = sample.split('/')[-1]
-    #     samp_noext = samp.replace("_ext","")
-    #     cat = get_category(samp, sample_map)
-    #     if cat == 'Ignore': continue
-
-    #     period = sample.split('/')[0]
-    #     #if '2016_APV' in period:
-
-    #     out[cat] += '\n'
-    #     out[cat] += f'// files for {samp} {period}\n'
-
-    #     basestr = f'chData->Add("'+basedir
-    #     files_kept = files_to_use(samp, files, period)
-    #     #print(files_kept)
-    #     for f in files_kept:
-    #     	out[cat] += '/'.join([basestr, f+'");\n']);
-    #     out[cat] += '\n'
-    #     #if '2018' in period:
-    # out["Data"] += f'ScanChain(chData, sample_strData, "{plotDir}", "{rootDir}");\n\n'
-
-
-    with open(f'../cpp/doAll_mc_Run2_t.C','w') as fi:
-        fi.write('{\n')
-        fi.write('gROOT->ProcessLine(".L analyze_bjets.C+");\n\n')
-        for cat in out.keys():
-            fi.write(f'// Category {cat}\n')
-            for line in out[cat].split('\n'):
-                if cat == 'Ignore': fi.write('// ')
-                fi.write(line)
-                fi.write('\n')
-        fi.write('\n}')
-	# TODO: add a line which calls the stackHists macro in analyze_bjets.
-        #       the outputs/data/hists_samp.root files are already known by this point in the program
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
+
