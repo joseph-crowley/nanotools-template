@@ -3,14 +3,24 @@ import json
 import subprocess
 import os
 import shutil
+import re
 from pprint import pprint
 
 # plotdir is where the plots go
 # skimdir is where the skim is
 # rootdir is where the output root files go
-PLOTDIR = '../cpp/outputs/plots'
-SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
-ROOTDIR = '../cpp/outputs/mc'
+PLOTDIR = 'outputs/plots'
+SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
+ROOTDIR = 'outputs/data'
+indent = 4*" "
+
+def get_file_name_for_doAll(filename):
+    pattern = r"(.*)_([0-9]+)_of_([0-9]+).*"
+    match = re.match(pattern, filename)
+    if match:
+        return match.group(1) + "*" + match.group(3) + ".root"
+    else:
+        return filename
 
 def create_file(dictionary, filename = "doAll_t.C", filepath = ""):
     if filepath:
@@ -23,10 +33,11 @@ def create_file(dictionary, filename = "doAll_t.C", filepath = ""):
             print(f'{file_path} already exists, a backup was created at {file_path}.bak and the original will be overwritten.')
         with open(file_path, "w") as file:
             file.write("{\n")
-            file.write("    gROOT->ProcessLine(\".L analyze_bjets.C+\");\n")
+            file.write(indent + "gROOT->ProcessLine(\".L analyze_bjets.C+\");\n")
+            file.write(indent + f'std::string FILEDIR = "{SKIMDIR}";\n')
             for category, string in sorted(dictionary.items()):
                 file.write("\n")
-                file.write("    // Category {}\n".format(category))
+                file.write(indent + "// Category {}\n".format(category))
                 file.write("{}\n".format(string))
             file.write("}\n")
     except Exception as e:
@@ -71,24 +82,20 @@ def generate_doall_script(category, files, plot_directory, basedir, rootdir):
     print(f'\n\n\n')
     print(f'generate_doall_script({category}, {files[:2]}, "{plot_directory}", "{basedir}", "{rootdir}")')
     out = ""
-    indent = "    "
     chains = set()
+    files_used = set()
     for sample in files:
-        files_used = set()
-        name_with_wildcard = "_".join(sample.split("_")[:-3] + ["*"] + sample.split("_")[-1:])
+        name_with_wildcard = get_file_name_for_doAll(sample.split("/")[-1])
         if name_with_wildcard in files_used: continue
         files_used.add(name_with_wildcard)
         period = sample.split('/')[0]
-        samp = '_'.join(sample.split("/")[-1].split("_")[0:-3])
-        samp_noext = samp.replace("_ext","")
         if category not in chains:
             chains.add(category)
-            out += indent + f'std::string FILEDIR = "{basedir}";\n'
             out += indent + f'TChain *ch{category} = new TChain("Events");\n'
-            out += indent + f'std::string sample_str{category}("{samp}");\n'
-        basestr = f'ch{category}->Add(FILEDIR + "'
+            out += indent + f'std::string sample_str{category}("{category}");\n'
+        basestr = f'ch{category}->Add((FILEDIR + "'
         # add the wild card to reduce the output
-        out += indent + f'{basestr}/{name_with_wildcard}");\n'
+        out += indent + f'{basestr}/{period}/{name_with_wildcard}").data());\n'
     out += indent + f'ScanChain(ch{category}, sample_str{category}, "{plot_directory}", "{rootdir}");\n\n'
     return ''.join(out)
 
@@ -104,9 +111,15 @@ def main():
             cat = get_category(base_sample, sample_map)
             if cat == category:
                 samples[cat].append(f)
+
+        if not samples[category]:
+            print(f'no samples for {category}')
+            del output_dict[category]
+            continue
+
         output_dict[category] = generate_doall_script(category, samples[category], PLOTDIR, SKIMDIR, ROOTDIR)
 
-    create_file(output_dict, filename = "doAll_test.C", filepath = ".")
+    create_file(output_dict, filename = "doAll_data_Run2.C", filepath = ".")
 
 if __name__ == "__main__":
     main()
