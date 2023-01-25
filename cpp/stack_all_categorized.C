@@ -9,15 +9,10 @@ gROOT->ProcessLine(".x loadLib.C");
 gROOT->ProcessLine(".L analyze_bjets.C+");
 
 vector<string> rootFiles;
-rootFiles.push_back("outputs/mc/hists_TT_2l2nu.root");
-rootFiles.push_back("outputs/mc/hists_TT_lnu.root");
-rootFiles.push_back("outputs/mc/hists_TTV.root");
-rootFiles.push_back("outputs/mc/hists_ST_tW.root");
-rootFiles.push_back("outputs/mc/hists_WW.root");
-rootFiles.push_back("outputs/mc/hists_Others.root");
-rootFiles.push_back("outputs/data/hists_Data_Run2.root");
+rootFiles.push_back("outputs/mc/hists_MC.root");
+rootFiles.push_back("outputs/data/hists_Data.root");
 
-stackHists("nbjet", rootFiles, dirName);
+//stackHists("nbjet", rootFiles, dirName);
 stackHists("njet_nb_lt2", rootFiles, dirName);
 stackHists("njet_nb_eq2", rootFiles, dirName);
 stackHists("njet_nb_gt2", rootFiles, dirName);
