@@ -5,19 +5,20 @@ import uproot
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Global variables to control file and directory paths
+file_to_add = 'mc.json'
 INPUT_DIR = "../cpp/outputs/mc/"
 INPUT_SUFFIX = "hists_"
 OUTPUT_DIR = INPUT_DIR 
-OUTPUT_SUFFIX = "test_hists_"
+OUTPUT_SUFFIX = INPUT_SUFFIX
 
 # setup logging
 logging.basicConfig(filename='add_categories.log', filemode='w', level=logging.INFO)
 log = logging.getLogger(__name__)
 
-def validate_json(file):
+def validate_json(file_name):
     """Validate the json file structure and contents"""
     try:
-        with open(file, 'r') as f:
+        with open(file_name, 'r') as f:
             sample_map = json.load(f)
             if not isinstance(sample_map, dict):
                 log.error("Invalid json file. Expecting a dictionary")
@@ -60,8 +61,8 @@ def add_histograms(cat, samples):
         log.error("An error occurred while adding histograms for category %s. Error: %s", cat, e)
 
 if __name__ == "__main__":
-    if validate_json('sample_map.json'):
-        with open('sample_map.json','r') as f:
+    if validate_json(file_to_add):
+        with open(file_to_add,'r') as f:
             sample_map = json.load(f)
 
         with ThreadPoolExecutor() as executor:
