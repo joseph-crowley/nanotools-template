@@ -9,10 +9,12 @@ from pprint import pprint
 # plotdir is where the plots go
 # skimdir is where the skim is
 # rootdir is where the output root files go
+tag = 'data'
+years = ['2016','2017','2018']
 PLOTDIR = 'outputs/plots'
-#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
-SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
-ROOTDIR = 'outputs/mc'
+SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
+#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
+ROOTDIR = f'outputs/{tag}'
 indent = 4*" "
 
 def get_file_name_for_doAll(filename):
@@ -29,7 +31,10 @@ def get_samples_by_category(categories, files):
     for category in categories:
         samples.update({category:[]})
         for f in files:
-            base_sample = "_".join(f.split('/')[-1].replace("_ext","").split("_of")[0].split("_")[:-1])
+            if "Data" in category:
+                base_sample = f.split('/')[-1].split('_')[0]
+            else:
+                base_sample = "_".join(f.split('/')[-1].replace("_ext","").split("_of")[0].split("_")[:-1])
             cat = get_category(base_sample, sample_map)
             if cat == category:
                 samples[cat].append(f)
@@ -67,10 +72,11 @@ def load_sample_map():
             sample_map_inv[s] = k
     return sample_map, sample_map_inv
 
-_, sample_map = load_sample_map()
+inv_sample_map, sample_map = load_sample_map()
 
 def get_category(base_sample, sample_map):
-    if 'Run20' in base_sample: return 'Data'
+    if 'Run20' in base_sample: 
+        return "Data_" + base_sample[3:-1]
     if base_sample in sample_map.keys():
         return sample_map[base_sample]
     return 'Ignore'
@@ -80,11 +86,12 @@ def get_all_periods(skim_dir):
     periods = subprocess.check_output(cmd, shell=True).decode('ascii').split('\n')[:-1]
     return periods
 
-def get_all_files(skim_dir, period: str = ''):
-    if not period:
-        periods = get_all_periods(skim_dir)
-    else:
-        periods = [period]
+def get_all_files(skim_dir, period = ''):
+    if not isinstance(period,list): 
+        if not period:
+            periods = get_all_periods(skim_dir)
+        else:
+            periods = [period]
 
     files = []
     for p in periods:
@@ -129,22 +136,56 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
 
 def main():
     categories = set(sample_map.values())
-    periods = get_all_periods(SKIMDIR)
+    if tag == "data":
+        # TODO: make the periods = years for data
+        #periods = years
+        periods = get_all_periods(SKIMDIR)
+    else: 
+        periods = get_all_periods(SKIMDIR)
     output_dict = create_output_dictionary(periods,categories)
     for period, categories_dict in output_dict.items():
         # generate a doAll script for the period with all categories
         files = get_all_files(SKIMDIR, period)
         samples_by_category = get_samples_by_category(categories, files)
-        categories_used = list(samples_by_category.keys())
+        periods_to_add = [i for category in samples_by_category.keys() for i in inv_sample_map[category]]
+        for p in periods_to_add:
+            if p == period: continue
+            files = get_all_files(SKIMDIR, p)
+            samples_to_add = get_samples_by_category(categories, files)
+
+            # update samples_by_category to join on keys with samples_to_add
+            for cat, fis in samples_to_add.items():
+                if cat in samples_by_category:
+                    samples_by_category[cat].extend(fis)
+                else:
+                    samples_by_category.update({cat:fis})
+
+        #print(samples_by_category)
+
         output_dict[period] = generate_doall_script(samples_by_category, PLOTDIR, SKIMDIR, ROOTDIR)
    
-    pprint(output_dict)
 
+    # join years for data (by this point all the periods will have info about the full year in data)
+    joined_output_dict = {}
+    periods_used = set()
+    for p, doall_str in output_dict.items():
+        if "APV" in p:
+            # 2016 needs special treatment
+            per = p[:5]
+        else:
+            per = p
+        if per in joined_output_dict or per[:-1] not in years: continue
+        joined_output_dict.update({per[:-1]: doall_str})
+        periods_used.add(p)
 
-    for period, doall_str in output_dict.items():
-         pprint(doall_str)
-         create_file(doall_str, f'doAll_{period}.C')
+    output_dict.update(joined_output_dict)
+    for p in periods_used:
+        del output_dict[p]
+
+    for per, doall_str in output_dict.items():
+        create_file(doall_str, f'doAll_{tag}_{per}.C')
 
 if __name__ == "__main__":
     main()
+
 
