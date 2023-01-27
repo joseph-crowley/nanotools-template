@@ -9,11 +9,17 @@ from pprint import pprint
 # plotdir is where the plots go
 # skimdir is where the skim is
 # rootdir is where the output root files go
-tag = 'data'
+
+# USE THESE SETTINGS FOR MONTE CARLO
+tag = 'mc'
+SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
+
+# USE THESE SETTINGS FOR DATA 
+#tag = 'data'
+#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
+
 years = ['2016','2017','2018']
 PLOTDIR = 'outputs/plots'
-SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
-#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
 ROOTDIR = f'outputs/{tag}'
 indent = 4*" "
 
@@ -64,7 +70,7 @@ def create_file(contents, filename = "doAll_t.C", filepath = ""):
         print(f"An error occurred: {e}")
 
 def load_sample_map():
-    with open('sample_map.json','r') as f:
+    with open(f'sample_map_{tag}.json','r') as f:
         sample_map = json.load(f)
     sample_map_inv = {}
     for k,l in sample_map.items():
@@ -92,6 +98,8 @@ def get_all_files(skim_dir, period = ''):
             periods = get_all_periods(skim_dir)
         else:
             periods = [period]
+    else:
+        periods = period
 
     files = []
     for p in periods:
@@ -127,7 +135,10 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
                 out += "\n"
                 out += indent + "// Category {}\n".format(category)
                 out += indent + f'TChain *ch{category} = new TChain("Events");\n'
-                out += indent + f'std::string sample_str{category}("{category}");\n'
+                if "Data" in category:
+                    out += indent + f'std::string sample_str{category}("{category}");\n'
+                else:
+                    out += indent + f'std::string sample_str{category}("{period}_{category}");\n'
             basestr = f'ch{category}->Add((FILEDIR + "'
             # add the wild card to reduce the output
             out += indent + f'{basestr}/{period}/{name_with_wildcard}").data());\n'
@@ -149,7 +160,7 @@ def main():
         samples_by_category = get_samples_by_category(categories, files)
         periods_to_add = [i for category in samples_by_category.keys() for i in inv_sample_map[category]]
         for p in periods_to_add:
-            if p == period: continue
+            if p == period or p[:4] not in years: continue
             files = get_all_files(SKIMDIR, p)
             samples_to_add = get_samples_by_category(categories, files)
 
