@@ -630,7 +630,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         hists_sorted.emplace_back(i, hists[i]);
     }
     std::cout << "created hist pairs" << endl;
-    //sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
+    sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
 
     // create a vector of colors hopefully larger than the number of histograms
     vector<int> colors;
