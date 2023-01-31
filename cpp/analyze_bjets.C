@@ -138,8 +138,22 @@ void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string pl
     }
 }
 
+
+double getStackIntegral(THStack* stack)
+{
+   double total_integral = 0.0;
+   TList* hist_list = stack->GetHists();
+   TIter next(hist_list);
+   TH1F* hist;
+   while ((hist = (TH1F*)next())) {
+      total_integral += hist->Integral();
+   }
+   return total_integral;
+}
+
+
 void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
-  //std::cout << "Make Ratio Plot" << endl;
+  std::cout << "Make Ratio Plot, given hs integral = "<< getStackIntegral(hs) << endl;
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
@@ -272,6 +286,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
 
   // save the plot to file
   //std::cout << plotDir << "/" << canvasname << endl;
+  std::cout << "Make Ratio Plot, stack integral = "<< getStackIntegral(hs) << endl;
  
   plot.save(plotDir, "png"); 
   plot.save(plotDir, "pdf"); 
