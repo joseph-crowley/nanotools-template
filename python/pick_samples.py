@@ -125,11 +125,19 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
     for category, files in samples_by_category.items():
         if category == 'Ignore':
             continue
+
+
         for sample in files:
             name_with_wildcard = get_file_name_for_doAll(sample.split("/")[-1])
             if name_with_wildcard in files_used: continue
             files_used.add(name_with_wildcard)
             period = sample.split('/')[0]
+
+            if "APV" in period:
+                period_str = "2016"
+            else:
+                period_str = period
+
             if category not in chains:
                 chains.add(category)
                 out += "\n"
@@ -138,7 +146,7 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
                 if "Data" in category:
                     out += indent + f'std::string sample_str{category}("{category}");\n'
                 else:
-                    out += indent + f'std::string sample_str{category}("{period}_{category}");\n'
+                    out += indent + f'std::string sample_str{category}("{period_str}_{category}");\n'
             basestr = f'ch{category}->Add((FILEDIR + "'
             # add the wild card to reduce the output
             out += indent + f'{basestr}/{period}/{name_with_wildcard}").data());\n'
@@ -182,7 +190,7 @@ def main():
     for p, doall_str in output_dict.items():
         if "APV" in p:
             # 2016 needs special treatment
-            per = p[:5]
+            per = "2016X"
         else:
             per = p
         if per in joined_output_dict or per[:-1] not in years: continue
