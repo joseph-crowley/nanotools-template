@@ -152,7 +152,7 @@ double getStackIntegral(THStack* stack)
 }
 
 
-void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
+void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, string plotDir, std::vector<pair<int, TH1F*> > hists_sorted, vector<string> legend_entries) {
   std::cout << "Make Ratio Plot, given hs integral = "<< getStackIntegral(hs) << endl;
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
@@ -161,7 +161,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   cout << "Preparing canvas " << canvasname << "..." << endl;
 
   float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
-  float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.0001);
+  float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
 
   // draw the histogram stack in the top pad
   plot.getInsidePanels()[0][1]->cd();
@@ -185,31 +185,39 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   TH1F* h_mc = (TH1F*)hs->GetStack()->Last();
 
   // create a legend
-  TLegend *legend = new TLegend(0.7, 0.7, 0.95, 0.90);
-  legend->SetBorderSize(0);
-  legend->SetTextFont(43);
-  legend->SetTextSize(plot.getStdPixelSize_XYLabel());
-  legend->SetLineColor(1);
-  legend->SetLineStyle(1);
-  legend->SetLineWidth(1);
-  legend->SetFillColor(0);
-  legend->SetFillStyle(0);
-  legend->AddEntry(h_data, "Observed", "ep");
-  //legend->AddEntry(h_mc, "MC", "f");
-
-
-  // TODO: fill in the MC components in legend
-  TList *histos = hs->GetHists();
-  TIter next(histos);
-  TH1 *histo;
-  while ((histo = (TH1*)next())) {
-      legend->AddEntry(histo, histo->GetXaxis()->GetTitle(), "f");
+  // fill the legend in reverse order
+  TLegend *leg = new TLegend(0.7, 0.7, 0.95, 0.90);
+  leg->AddEntry(h_data, "data", "lep");
+  for(int i = hists_sorted.size() - 1; i >= 0; i--){
+      leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
   }
+  // then Others
+  leg->AddEntry(h_Others, "Others", "f");
+  leg->Draw();
+
+  //legend->SetBorderSize(0);
+  //legend->SetTextFont(43);
+  //legend->SetTextSize(plot.getStdPixelSize_XYLabel());
+  //legend->SetLineColor(1);
+  //legend->SetLineStyle(1);
+  //legend->SetLineWidth(1);
+  //legend->SetFillColor(0);
+  //legend->SetFillStyle(0);
+  //legend->AddEntry(h_data, "Observed", "ep");
+  //legend->AddEntry(h_mc, "MC", "f");
+  //// TODO: fill in the MC components in legend
+  //TList *histos = hs->GetHists();
+  //TIter next(histos);
+  //TH1 *histo;
+  //while ((histo = (TH1*)next())) {
+  //    legend->AddEntry(histo, histo->GetXaxis()->GetTitle(), "f");
+  //}
+
+  //leg->SetTextSize(plot.getStdPixelSize_XYLabel());
 
   // TODO: compute the size of the legend based on the number of entries
   // ymin = ymax - (entry_size)*n_entries
 
-  legend->Draw();
 
   // make the cut string
   vector<string> cuts;
@@ -702,8 +710,8 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     hs->SetMinimum(1e-1);
     hs->SetMaximum(3e5);
     hs->Draw("hist");
-    //hs->GetXaxis()->SetTitle(hname_latex.data());
-    //hs->GetYaxis()->SetTitle("Events");
+    hs->GetXaxis()->SetTitle(hname_latex.data());
+    hs->GetYaxis()->SetTitle("Events");
 
     // fill the legend in reverse order
     leg->AddEntry(h_data, "data", "lep");
@@ -746,7 +754,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     f->Write();
     f->Close();
 
-    makeRatioPlot(hs, h_data, hname, plotDir);
+    makeRatioPlot(hs, h_Others, h_data, hname, plotDir, hists_sorted, legend_entries);
 
     // clean up memory
     delete c;
