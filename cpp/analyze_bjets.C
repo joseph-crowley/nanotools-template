@@ -268,7 +268,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
   ytitle->SetTextFont(PlotCanvas::getStdFont_XYTitle());
   ytitle->SetTextSize(plot.getStdPixelSize_XYTitle());
   ytitle->SetTextAngle(90);
-  ytitle->DrawLatexNDC(0.5, 1.-0.5/1.4, "Events / bin");
+  ytitle->DrawLatexNDC(0.5, 1.-0.5/1.4, "Events");
   ytitle->DrawLatexNDC(0.5, 0.15/1.4, "Ratio");
   plot.getInsidePanels()[0][0]->cd();
   
