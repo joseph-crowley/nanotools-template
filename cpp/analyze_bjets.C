@@ -121,7 +121,7 @@ void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string pl
     for (auto const& h_var: h_vars){
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
       varPlot->cd();
-      //h_var->GetXaxis()->SetTitle(varName.c_str());
+      //h_var->GetXaxis()->SetTitle(h_var->GetName());
       //h_var->GetYaxis()->SetTitle("Events");
       h_var->Draw();
       varPlot->SetLogy();
@@ -160,10 +160,14 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
   cout << "Preparing canvas " << canvasname << "..." << endl;
 
+  float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
+  float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.0001);
+
   // draw the histogram stack in the top pad
   plot.getInsidePanels()[0][1]->cd();
-  hs->SetMaximum(hs->GetMaximum() * 1.1);
-  hs->SetMinimum(0.0);
+  plot.getInsidePanels()[0][1]->SetLogy();
+  hs->SetMaximum(PLOT_MAX);
+  hs->SetMinimum(PLOT_MIN);
   hs->Draw("hist");
   hs->GetXaxis()->SetTitleFont(PlotCanvas::getStdFont_XYTitle());
   hs->GetXaxis()->SetTitleSize(plot.getStdPixelSize_XYTitle());
@@ -236,8 +240,10 @@ void makeRatioPlot(THStack* hs, TH1F* h_data, string hname, string plotDir) {
   h_ratio->SetMarkerSize(1.2);
   h_ratio->SetLineWidth(2);
   h_ratio->SetLineColor(kBlack);
-  h_ratio->SetMinimum(0.0);
-  h_ratio->SetMaximum(2.0);
+  float RATIO_MAX = std::min(10., h_ratio->GetMaximum()*1.2);
+  float RATIO_MIN = std::min(0.5, h_ratio->GetMinimum()*0.8);
+  h_ratio->SetMaximum(RATIO_MAX);
+  h_ratio->SetMinimum(RATIO_MIN);
 
   // Add x and y titles
   TPad* pad_xtitle = plot.getBorderPanels().at(0); pad_xtitle->cd();

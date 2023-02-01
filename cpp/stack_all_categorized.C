@@ -51,18 +51,18 @@
  STACK_HIST("m_bb_nb_eq2")\
  STACK_HIST("m_bb_nb_gt2")
 
- vector<string> rootFiles_2016;
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_Others.root");
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_ST_tW.root");     
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TTV.root");       
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_2l2nu.root");  
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_lnu.root");    
- rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_WW.root");        
- rootFiles_2016.push_back("outputs/data/hists_Data_2016.root");
-
-#define STACK_HIST(name) stackHists(name, rootFiles_2016, dirName);
-STACK_HISTS
-#undef STACK_HIST 
+// vector<string> rootFiles_2016;
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_Others.root");
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_ST_tW.root");     
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TTV.root");       
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_2l2nu.root");  
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_lnu.root");    
+// rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_WW.root");        
+// rootFiles_2016.push_back("outputs/data/hists_Data_2016.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_2016, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
 
  vector<string> rootFiles_2017;
  rootFiles_2017.push_back("outputs/mc/hists_2017_WW.root");
@@ -77,18 +77,18 @@ STACK_HISTS
 STACK_HISTS
 #undef STACK_HIST 
 
- vector<string> rootFiles_2018;
- rootFiles_2018.push_back("outputs/mc/hists_2018_TTV.root");
- rootFiles_2018.push_back("outputs/mc/hists_2018_Others.root");
- rootFiles_2018.push_back("outputs/mc/hists_2018_ST_tW.root");
- rootFiles_2018.push_back("outputs/mc/hists_2018_TT_2l2nu.root");
- rootFiles_2018.push_back("outputs/mc/hists_2018_TT_lnu.root");
- rootFiles_2018.push_back("outputs/mc/hists_2018_WW.root");
- rootFiles_2018.push_back("outputs/data/hists_Data_2018.root");
-
-#define STACK_HIST(name) stackHists(name, rootFiles_2018, dirName);
-STACK_HISTS
-#undef STACK_HIST 
+// vector<string> rootFiles_2018;
+// rootFiles_2018.push_back("outputs/mc/hists_2018_TTV.root");
+// rootFiles_2018.push_back("outputs/mc/hists_2018_Others.root");
+// rootFiles_2018.push_back("outputs/mc/hists_2018_ST_tW.root");
+// rootFiles_2018.push_back("outputs/mc/hists_2018_TT_2l2nu.root");
+// rootFiles_2018.push_back("outputs/mc/hists_2018_TT_lnu.root");
+// rootFiles_2018.push_back("outputs/mc/hists_2018_WW.root");
+// rootFiles_2018.push_back("outputs/data/hists_Data_2018.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_2018, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
 
 
 #undef STACK_HISTS
