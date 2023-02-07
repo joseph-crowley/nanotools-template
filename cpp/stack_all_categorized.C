@@ -47,7 +47,6 @@
  STACK_HIST("m_lb_nb_lt2")\
  STACK_HIST("m_lb_nb_eq2")\
  STACK_HIST("m_lb_nb_gt2")\
- STACK_HIST("m_bb_nb_lt2")\
  STACK_HIST("m_bb_nb_eq2")\
  STACK_HIST("m_bb_nb_gt2")
 
