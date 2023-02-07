@@ -446,8 +446,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     
       // Fill histograms
       //std::cout << "Filling histograms" << endl;
-      //if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-      if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched);
+      if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
       for (unsigned int i_bjet = 0; i_bjet < 3; i_bjet++){
         //std::cout << "Filling histograms: " << i_bjet << endl;
         // lt2 eq2 gt2 
@@ -456,35 +455,22 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         if ((i_bjet == 2) && (nbjet <= 2)) continue;
 
         if (PFMET_pt_final > 50.) {
-          //h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched);
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
       
           // dilepton hists
-          //h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched);
-          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched);
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
         }
-        //h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched);
-        //h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched);
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
       }
     }
 
