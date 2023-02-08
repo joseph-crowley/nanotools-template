@@ -14,14 +14,25 @@ from pprint import pprint
 tag = 'mc'
 SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
 
-# USE THESE SETTINGS FOR DATA 
+## USE THESE SETTINGS FOR DATA 
 #tag = 'data'
 #SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
 
-years = ['2016','2017','2018']
+years = ['APV_2016','NonAPV_2016' ,'2017','2018']
 PLOTDIR = 'outputs/plots'
 ROOTDIR = f'outputs/{tag}'
 indent = 4*" "
+
+def get_2016_era(period):
+    APV = ['B','C','D','E','F_APV']
+    NonAPV = ['G','H','F_NonAPV']
+    APV_2016 = ['2016'+c for c in APV]
+    NonAPV_2016 = ['2016'+c for c in NonAPV]
+    if period in APV_2016:
+        return "APV_2016X"
+    if period in NonAPV_2016:
+        return "NonAPV_2016X"
+    return period
 
 def get_file_name_for_doAll(filename):
     pattern = r"(.*)_([0-9]+)_of_([0-9]+).*"
@@ -41,7 +52,7 @@ def get_samples_by_category(categories, files):
                 base_sample = f.split('/')[-1].split('_')[0]
             else:
                 base_sample = "_".join(f.split('/')[-1].replace("_ext","").split("_of")[0].split("_")[:-1])
-            cat = get_category(base_sample, sample_map)
+            cat = get_category(base_sample, map_sample_to_category)
             if cat == category:
                 samples[cat].append(f)
 
@@ -78,13 +89,13 @@ def load_sample_map():
             sample_map_inv[s] = k
     return sample_map, sample_map_inv
 
-inv_sample_map, sample_map = load_sample_map()
+map_category_to_sample, map_sample_to_category = load_sample_map()
 
-def get_category(base_sample, sample_map):
+def get_category(base_sample, map_sample_to_category):
     if 'Run20' in base_sample: 
         return "Data_" + base_sample[3:-1]
-    if base_sample in sample_map.keys():
-        return sample_map[base_sample]
+    if base_sample in map_sample_to_category.keys():
+        return map_sample_to_category[base_sample]
     return 'Ignore'
 
 def get_all_periods(skim_dir):
@@ -133,10 +144,11 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
             files_used.add(name_with_wildcard)
             period = sample.split('/')[0]
 
-            if "APV" in period:
-                period_str = "2016"
-            else:
-                period_str = period
+            #if "APV" in period:
+            #    period_str = "2016"
+            #else:
+            #    period_str = period
+            period_str = period
 
             if category not in chains:
                 chains.add(category)
@@ -154,7 +166,7 @@ def generate_doall_script(samples_by_category, plot_directory, basedir, rootdir)
     return ''.join(''.join(out))
 
 def main():
-    categories = set(sample_map.values())
+    categories = set(map_sample_to_category.values())
     if tag == "data":
         # TODO: make the periods = years for data
         #periods = years
@@ -166,7 +178,7 @@ def main():
         # generate a doAll script for the period with all categories
         files = get_all_files(SKIMDIR, period)
         samples_by_category = get_samples_by_category(categories, files)
-        periods_to_add = [i for category in samples_by_category.keys() for i in inv_sample_map[category]]
+        periods_to_add = [i for category in samples_by_category.keys() for i in map_category_to_sample[category]]
         for p in periods_to_add:
             if p == period or p[:4] not in years: continue
             files = get_all_files(SKIMDIR, p)
@@ -188,9 +200,9 @@ def main():
     joined_output_dict = {}
     periods_used = set()
     for p, doall_str in output_dict.items():
-        if "APV" in p:
-            # 2016 needs special treatment
-            per = "2016X"
+        # 2016 needs special treatment
+        if "2016" in p:
+            per = get_2016_era(p)
         else:
             per = p
         if per in joined_output_dict or per[:-1] not in years: continue
@@ -203,6 +215,7 @@ def main():
 
     for per, doall_str in output_dict.items():
         create_file(doall_str, f'doAll_{tag}_{per}.C')
+    #pprint(output_dict)
 
 if __name__ == "__main__":
     main()
