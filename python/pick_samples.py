@@ -10,13 +10,13 @@ from pprint import pprint
 # skimdir is where the skim is
 # rootdir is where the output root files go
 
-# USE THESE SETTINGS FOR MONTE CARLO
-tag = 'mc'
-SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
+## USE THESE SETTINGS FOR MONTE CARLO
+#tag = 'mc'
+#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_MC"
 
-## USE THESE SETTINGS FOR DATA 
-#tag = 'data'
-#SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
+# USE THESE SETTINGS FOR DATA 
+tag = 'data'
+SKIMDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data"
 
 years = ['APV_2016','NonAPV_2016' ,'2017','2018']
 PLOTDIR = 'outputs/plots'
@@ -219,5 +219,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 

@@ -50,6 +50,45 @@
  STACK_HIST("m_bb_nb_eq2")\
  STACK_HIST("m_bb_nb_gt2")
 
+ vector<string> rootFiles_17_18;
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_Others.root");
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_ST_tW.root");     
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_TTV.root");       
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_2l2nu.root");  
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_lnu.root");    
+ rootFiles_17_18.push_back("outputs/mc/hists_17_18_WW.root");        
+ rootFiles_17_18.push_back("outputs/data/hists_17_18_Data.root");
+
+#define STACK_HIST(name) stackHists(name, rootFiles_17_18, dirName);
+STACK_HISTS
+#undef STACK_HIST 
+
+// vector<string> rootFiles_All;
+// rootFiles_All.push_back("outputs/mc/hists_All_Others.root");
+// rootFiles_All.push_back("outputs/mc/hists_All_ST_tW.root");     
+// rootFiles_All.push_back("outputs/mc/hists_All_TTV.root");       
+// rootFiles_All.push_back("outputs/mc/hists_All_TT_2l2nu.root");  
+// rootFiles_All.push_back("outputs/mc/hists_All_TT_lnu.root");    
+// rootFiles_All.push_back("outputs/mc/hists_All_WW.root");        
+// rootFiles_All.push_back("outputs/data/hists_All_Data.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_All, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
+
+// vector<string> rootFiles_2016;
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_Others.root");
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_ST_tW.root");     
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_TTV.root");       
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_TT_2l2nu.root");  
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_TT_lnu.root");    
+// rootFiles_2016.push_back("outputs/mc/hists_2016_APV_WW.root");        
+// rootFiles_2016.push_back("outputs/data/hists_Data_2016_APV.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_2016, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
+
 // vector<string> rootFiles_2016;
 // rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_Others.root");
 // rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_ST_tW.root");     
@@ -57,24 +96,24 @@
 // rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_2l2nu.root");  
 // rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_TT_lnu.root");    
 // rootFiles_2016.push_back("outputs/mc/hists_2016_NonAPV_WW.root");        
-// rootFiles_2016.push_back("outputs/data/hists_Data_2016.root");
+// rootFiles_2016.push_back("outputs/data/hists_Data_2016_NonAPV.root");
 //
 //#define STACK_HIST(name) stackHists(name, rootFiles_2016, dirName);
 //STACK_HISTS
 //#undef STACK_HIST 
 
- vector<string> rootFiles_2017;
- rootFiles_2017.push_back("outputs/mc/hists_2017_WW.root");
- rootFiles_2017.push_back("outputs/mc/hists_2017_TT_lnu.root");
- rootFiles_2017.push_back("outputs/mc/hists_2017_Others.root");           
- rootFiles_2017.push_back("outputs/mc/hists_2017_ST_tW.root");            
- rootFiles_2017.push_back("outputs/mc/hists_2017_TTV.root");              
- rootFiles_2017.push_back("outputs/mc/hists_2017_TT_2l2nu.root");
- rootFiles_2017.push_back("outputs/data/hists_Data_2017.root");
-
-#define STACK_HIST(name) stackHists(name, rootFiles_2017, dirName);
-STACK_HISTS
-#undef STACK_HIST 
+// vector<string> rootFiles_2017;
+// rootFiles_2017.push_back("outputs/mc/hists_2017_WW.root");
+// rootFiles_2017.push_back("outputs/mc/hists_2017_TT_lnu.root");
+// rootFiles_2017.push_back("outputs/mc/hists_2017_Others.root");           
+// rootFiles_2017.push_back("outputs/mc/hists_2017_ST_tW.root");            
+// rootFiles_2017.push_back("outputs/mc/hists_2017_TTV.root");              
+// rootFiles_2017.push_back("outputs/mc/hists_2017_TT_2l2nu.root");
+// rootFiles_2017.push_back("outputs/data/hists_Data_2017.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_2017, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
 
 // vector<string> rootFiles_2018;
 // rootFiles_2018.push_back("outputs/mc/hists_2018_TTV.root");

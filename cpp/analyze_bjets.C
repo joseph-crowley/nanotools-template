@@ -10,6 +10,7 @@
 #include "TPad.h"
 #include "THStack.h"
 #include "TStyle.h"
+#include "TText.h"
 #include "TLine.h"
 #include "TLegend.h"
 #include "TRatioPlot.h"
@@ -114,6 +115,18 @@ string getHistogramName(string hname){
     }
 
     return hname_latex;
+}
+
+void addTextToMarkers(TH1F *hist) {
+   for (int i = 1; i <= hist->GetNbinsX(); i++) {
+      float value = hist->GetBinContent(i);
+      if (value == 0) continue; // don't add text for empty bins
+      TText *text = new TText(hist->GetBinCenter(i), 0.7, Form("%.2f", value));
+      text->SetTextAlign(22);
+      text->SetTextFont(42);
+      text->SetTextSize(0.03);
+      text->Draw();
+   }
 }
 
 void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string plotDir) {
@@ -248,8 +261,10 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
   h_ratio->SetMarkerSize(1.2);
   h_ratio->SetLineWidth(2);
   h_ratio->SetLineColor(kBlack);
-  float RATIO_MAX = std::min(10., h_ratio->GetMaximum()*1.2);
-  float RATIO_MIN = std::min(0.5, h_ratio->GetMinimum()*0.8);
+  //float RATIO_MAX = std::min(10., h_ratio->GetMaximum()*1.2);
+  //float RATIO_MIN = std::min(0.5, h_ratio->GetMinimum()*0.8);
+  float RATIO_MAX = 1.2;
+  float RATIO_MIN = 0.6;
   h_ratio->SetMaximum(RATIO_MAX);
   h_ratio->SetMinimum(RATIO_MIN);
 
@@ -293,6 +308,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
   // manual
   h_ratio->GetXaxis()->SetTitleOffset(2);
   h_ratio->Draw("e1p");
+  //addTextToMarkers(h_ratio);
 
   // draw the cut string on the canvas
   tex->SetTextSize(plot.getStdPixelSize_CMSLogoExtras());
@@ -300,7 +316,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
 
   // save the plot to file
   //std::cout << plotDir << "/" << canvasname << endl;
-  std::cout << "Make Ratio Plot, stack integral = "<< getStackIntegral(hs) << endl;
+  //std::cout << "Make Ratio Plot, stack integral = "<< getStackIntegral(hs) << endl;
  
   plot.save(plotDir, "png"); 
   plot.save(plotDir, "pdf"); 
@@ -443,6 +459,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       TLorentzVector lep2;
       lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
       TLorentzVector dilep = lep1 + lep2;
+
+      // TODO: remove this from the processing
+      if (sample_str.find("Data") != std::string::npos) event_wgt_SFs_btagging = 1.;
     
       // Fill histograms
       //std::cout << "Filling histograms" << endl;
