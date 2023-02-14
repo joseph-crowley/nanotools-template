@@ -39,7 +39,11 @@ using namespace PlottingHelpers;
   for (unsigned int i=0; i<3; i++){ \
     /* name the categories lt2 eq2 gt2 */ \
     std::string catname = #name; \
-    if (catname == "nbjet") { if (i>0) break;} \
+    if (catname == "jetpt") { if (i>0) break;} \
+    else if (catname == "nbjet" || catname == "bjetpt") {
+      if (i==0) catname += "_loose"; \
+      else if (i==1) catname += "_medium"; \
+      else if (i==2) catname += "_tight";} \
     else {\
       if (i==0) catname += "_nb_lt2"; \
       else if (i==1) catname += "_nb_eq2"; \
@@ -67,6 +71,12 @@ string getHistogramName(string hname){
     string hname_latex = "";
     if(hname.find("njet") != string::npos){
         hname_latex = "n_{jet}";
+    }  
+    else if(hname == "bjetpt"){
+        hname_latex = "p_{T}^{b}";
+    }  
+    else if(hname == "jetpt"){
+        hname_latex = "p_{T}^{j}";
     }  
     else if(hname == "nbjet"){
         hname_latex = "n_{b}";
@@ -344,6 +354,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     int const njet_nbin = 7;
     H1vec(njet,njet_nbin,0,njet_nbin);
 
+    int const bjetpt_nbin = 100;
+    H1vec(bjetpt,bjetpt_nbin,0,1000);
+
+    int const jetpt_nbin = 100;
+    H1vec(jetpt,jetpt_nbin,0,1000);
+
     int const nbjet_nbin = 7;
     H1vec(nbjet,nbjet_nbin,0,nbjet_nbin);
 //    std::cout << "2" << endl;
@@ -399,8 +415,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     ch->SetBranchAddress("nak4jets_tight_pt25", &njet);
     //std::cout << "3" << endl;
 
-    unsigned int nbjet;
-    ch->SetBranchAddress("nak4jets_tight_pt25_btagged", &nbjet);
     //std::cout << "4" << endl;
 
     float PFMET_pt_final;
@@ -409,8 +423,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     std::vector<float> *jet_pt = 0;
     ch->SetBranchAddress("ak4jets_pt", &jet_pt);
 
-    std::vector<bool> *jet_is_btagged = 0;
-    ch->SetBranchAddress("ak4jets_is_btagged", &jet_is_btagged);
+    std::vector<unsigned char> *jet_is_btagged = 0;
+    ch->SetBranchAddress("ak4jets_pass_btagging", &jet_is_btagged);
 
     // add lepton variables pt, eta, phi, m
     std::vector<float> *lep_pt = 0;
@@ -444,14 +458,28 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       bar.progress(nEventsTotal, nEventsChain);
     
       // Calculate variables needed for filling histograms
-      int njet_ct = 0;
+      std::vector<unsigned int> nbjet_ct;
+      nbjet_ct.push_back(0);
+      nbjet_ct.push_back(0);
+      nbjet_ct.push_back(0);
+      unsigned int njet_ct = 0;
       float Ht = 0;
       for (unsigned int i = 0; i < njet; i++) {
+        // is_btagged is an unsigned char 
+        // defined by int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight)
         auto const& is_btagged = jet_is_btagged->at(i);
         auto const& pt = jet_pt->at(i);
         float const pt_threshold = (is_btagged ? 25. : 40.);
-        if (pt > pt_threshold) Ht += pt;
-        if (!is_btagged) njet_ct++;
+        if (pt > pt_threshold) {
+            Ht += pt;
+            
+            if (is_btagged == 0 && PFMET_pt_final > 50.) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+            if (is_btagged > 0 && PFMET_pt_final > 50.) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        }
+        if (is_btagged == 0) njet_ct++;
+        if (is_btagged >= 1) nbjet_ct.at(0)++;
+        if (is_btagged >= 2) nbjet_ct.at(1)++;
+        if (is_btagged >= 3) nbjet_ct.at(2)++;
       }
       //std::cout << "5" << endl;
       TLorentzVector lep1;
@@ -465,15 +493,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     
       // Fill histograms
       //std::cout << "Filling histograms" << endl;
-      if (PFMET_pt_final > 50.) h_nbjet.front()->Fill(nbjet, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
       for (unsigned int i_bjet = 0; i_bjet < 3; i_bjet++){
         //std::cout << "Filling histograms: " << i_bjet << endl;
-        // lt2 eq2 gt2 
+
+        // coincidentally there are 3 WPs and 3 categories, so no need to loop twice. i_bjet = loose, med, tight
+        if (PFMET_pt_final > 50.) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+
+        // lt2 eq2 gt2 categories
         if ((i_bjet == 0) && (nbjet >= 2)) continue;
         if ((i_bjet == 1) && (nbjet != 2)) continue;
         if ((i_bjet == 2) && (nbjet <= 2)) continue;
 
         if (PFMET_pt_final > 50.) {
+          h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
           h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
           h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
           h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
@@ -494,7 +526,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     }
 
     //std::cout << "rebinning histograms" << endl;
-    std::vector<std::vector<TH1F *> *> histograms {&h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
+    std::vector<std::vector<TH1F *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
     
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
@@ -509,6 +541,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     // save histograms as png, pdf, and root files
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
+    plotVariable(h_jetpt, sample_str, plotDir);
+    plotVariable(h_bjetpt, sample_str, plotDir);
     plotVariable(h_met, sample_str, plotDir);
     plotVariable(h_Ht, sample_str, plotDir);
     plotVariable(h_lep1_pt, sample_str, plotDir);
@@ -533,6 +567,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
 #define WRITE_HISTOGRAMS \
    WRITE_HISTOGRAM(h_nbjet)\
+   WRITE_HISTOGRAM(h_bjetpt)\
+   WRITE_HISTOGRAM(h_jetpt)\
    WRITE_HISTOGRAM(h_njet)\
    WRITE_HISTOGRAM(h_met)\
    WRITE_HISTOGRAM(h_Ht)\
@@ -726,8 +762,10 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
 
 
     // compute the min and max for hs
-    hs->SetMinimum(1e-1);
-    hs->SetMaximum(3e5);
+    float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
+    float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
+    hs->SetMinimum(PLOT_MIN);
+    hs->SetMaximum(PLOT_MAX);
     hs->Draw("hist");
     hs->GetXaxis()->SetTitle(hname_latex.data());
     hs->GetYaxis()->SetTitle("Events");
@@ -757,12 +795,12 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     string plotName = plotDir + "/";
     plotName += hname;
     plotName += "_stack.pdf";
-    c->SaveAs(plotName.data());
+    //c->SaveAs(plotName.data());
 
     plotName = plotDir + "/";
     plotName += hname;
     plotName += "_stack.png";
-    c->SaveAs(plotName.data());
+    //c->SaveAs(plotName.data());
 
     // save the stacked histograms to a root file
     string outfile_name = plotDir + "/";

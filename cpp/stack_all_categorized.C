@@ -10,7 +10,13 @@
 
  // set up a directive to stack all the hists
 #define STACK_HISTS \
- STACK_HIST("nbjet")\
+ STACK_HIST("jetpt")\
+ STACK_HIST("nbjet_loose")\
+ STACK_HIST("nbjet_medium")\
+ STACK_HIST("nbjet_tight")\
+ STACK_HIST("bjetpt_loose")\
+ STACK_HIST("bjetpt_medium")\
+ STACK_HIST("bjetpt_tight")\
  STACK_HIST("njet_nb_lt2")\
  STACK_HIST("njet_nb_eq2")\
  STACK_HIST("njet_nb_gt2")\
@@ -50,18 +56,18 @@
  STACK_HIST("m_bb_nb_eq2")\
  STACK_HIST("m_bb_nb_gt2")
 
- vector<string> rootFiles_17_18;
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_Others.root");
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_ST_tW.root");     
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_TTV.root");       
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_2l2nu.root");  
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_lnu.root");    
- rootFiles_17_18.push_back("outputs/mc/hists_17_18_WW.root");        
- rootFiles_17_18.push_back("outputs/data/hists_17_18_Data.root");
-
-#define STACK_HIST(name) stackHists(name, rootFiles_17_18, dirName);
-STACK_HISTS
-#undef STACK_HIST 
+// vector<string> rootFiles_17_18;
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_Others.root");
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_ST_tW.root");     
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_TTV.root");       
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_2l2nu.root");  
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_TT_lnu.root");    
+// rootFiles_17_18.push_back("outputs/mc/hists_17_18_WW.root");        
+// rootFiles_17_18.push_back("outputs/data/hists_17_18_Data.root");
+//
+//#define STACK_HIST(name) stackHists(name, rootFiles_17_18, dirName);
+//STACK_HISTS
+//#undef STACK_HIST 
 
 // vector<string> rootFiles_All;
 // rootFiles_All.push_back("outputs/mc/hists_All_Others.root");
@@ -115,18 +121,18 @@ STACK_HISTS
 //STACK_HISTS
 //#undef STACK_HIST 
 
-// vector<string> rootFiles_2018;
-// rootFiles_2018.push_back("outputs/mc/hists_2018_TTV.root");
-// rootFiles_2018.push_back("outputs/mc/hists_2018_Others.root");
-// rootFiles_2018.push_back("outputs/mc/hists_2018_ST_tW.root");
-// rootFiles_2018.push_back("outputs/mc/hists_2018_TT_2l2nu.root");
-// rootFiles_2018.push_back("outputs/mc/hists_2018_TT_lnu.root");
-// rootFiles_2018.push_back("outputs/mc/hists_2018_WW.root");
-// rootFiles_2018.push_back("outputs/data/hists_Data_2018.root");
-//
-//#define STACK_HIST(name) stackHists(name, rootFiles_2018, dirName);
-//STACK_HISTS
-//#undef STACK_HIST 
+ vector<string> rootFiles_2018;
+ rootFiles_2018.push_back("outputs/mc/hists_2018_TTV.root");
+ rootFiles_2018.push_back("outputs/mc/hists_2018_Others.root");
+ rootFiles_2018.push_back("outputs/mc/hists_2018_ST_tW.root");
+ rootFiles_2018.push_back("outputs/mc/hists_2018_TT_2l2nu.root");
+ rootFiles_2018.push_back("outputs/mc/hists_2018_TT_lnu.root");
+ rootFiles_2018.push_back("outputs/mc/hists_2018_WW.root");
+ rootFiles_2018.push_back("outputs/data/hists_Data_2018.root");
+
+#define STACK_HIST(name) stackHists(name, rootFiles_2018, dirName);
+STACK_HISTS
+#undef STACK_HIST 
 
 
 #undef STACK_HISTS
