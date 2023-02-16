@@ -1,8 +1,60 @@
 import os
+import uproot
 import pandas as pd
+import numpy as np
 import json
+import glob
+
+samples_csv = '/home/users/crowley/tttt/CMSSW_10_6_26/src/tttt/test/samples_MC_Run2.csv'
+samples_json = 'samples_MC_Run2.json'
 
 data_dir = '/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230214_tt_bkg_Cutbased'
+
+#samples_csv = 'samples.csv'
+#samples_json = samples_csv.replace('csv','json')
+
+# Functions to calculate the scale1fb and other metadata for a set of files and cross section
+def calc_scale1fb(xs, sum_weights):
+    if xs <= 0:
+        return -1
+    else:
+        return (xs * 1000.) / sum_weights
+
+def calculate_metadata(files, xs, debug):
+    # for tttt we don't use this
+    return {"xs": xs}
+
+    # other analysis later
+    nEvents = 0
+    sumWeights = 0
+
+    files_to_use = get_files(files)
+
+    for file_ in files_to_use:
+        root_file = uproot.open(file_)
+        runs = root_file["Events"]
+        if not runs.keys():
+            results = {
+                "xs" : xs,
+                "scale1fb" : 1,
+                "n_events" : 0,
+                "sumWeights" : 0
+            }
+            return results
+        nEntries = runs.num_entries
+
+        nEvents += nEntries 
+        # sumWeights += TODO
+
+    # scale1fb is already in the weights, not used for this analysis
+    scale1fb = calc_scale1fb(xs, sumWeights)
+
+    results = {
+        "xs" : xs,
+        "scale1fb" : scale1fb,
+        "n_events" : nEvents,
+    }
+    return results
 
 # Function to get the paths for a given dataset and period
 def get_paths(short_name, period):
@@ -16,8 +68,18 @@ def get_paths(short_name, period):
 
     return [path]
 
+def get_files(files):
+    file_list = []
+    for file_ in files:
+        try:
+            file_list.extend(glob.glob(file_))
+        except (FileNotFoundError, TypeError, OSError) as e:
+            # Handle the error here, for example by printing an error message or raising a custom exception.
+            print(f'Error: {e}')
+    return file_list
+
 # Load CSV file into a pandas DataFrame
-df = pd.read_csv('samples.csv')
+df = pd.read_csv(samples_csv)
 
 # Initialize an empty dictionary to hold the output
 samples_dict = {}
@@ -26,7 +88,7 @@ samples_dict = {}
 for index, row in df.iterrows():
     # Extract the relevant information from the row
     dataset = row['dataset']
-    short_name = row['short_name'].replace('_ext','')
+    short_name = row['short_name']
 
     if "#" in dataset:
         continue
@@ -44,10 +106,11 @@ for index, row in df.iterrows():
         samples_dict[short_name][period] = {'paths':[], 'metadata':{}}
 
     # Add the paths and metadata to the period dictionary
-    samples_dict[short_name][period]['paths'].append(get_paths(short_name, period))
-    samples_dict[short_name][period]['metadata'].update({'xs': xsec})
+    file_paths = get_paths(short_name, period)
+    metadata = calculate_metadata(file_paths, xsec, 0)
+    samples_dict[short_name][period]['paths'].append(file_paths)
+    samples_dict[short_name][period]['metadata'].update(metadata)
 
 # Convert the dictionary to a JSON string and save it to a file
-with open('samples.json', 'w') as f:
+with open(samples_json, 'w') as f:
     json.dump(samples_dict, f, indent=4)
-
