@@ -1,6 +1,6 @@
 {
     gROOT->ProcessLine(".L analyze_bjets.C+");
-    std::string FILEDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data";
+    std::string FILEDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230209_tt_bkg_Cutbased";
 
 
     // Category Data_2018

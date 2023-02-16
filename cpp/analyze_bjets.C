@@ -40,7 +40,7 @@ using namespace PlottingHelpers;
     /* name the categories lt2 eq2 gt2 */ \
     std::string catname = #name; \
     if (catname == "jetpt") { if (i>0) break;} \
-    else if (catname == "nbjet" || catname == "bjetpt") {
+    else if (catname == "nbjet" || catname == "bjetpt") { \
       if (i==0) catname += "_loose"; \
       else if (i==1) catname += "_medium"; \
       else if (i==2) catname += "_tight";} \
@@ -439,11 +439,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     std::vector<float> *lep_mass = 0;
     ch->SetBranchAddress("leptons_mass", &lep_mass);
 
-    float min_mbb;
-    ch->SetBranchAddress("min_mbb", &min_mbb);
-
-    float min_mlb;
-    ch->SetBranchAddress("min_mlb", &min_mlb);
+    //TODO: calculate masses with b's, for L,M,T categories.
+    float min_mbb_WPL;
+    float min_mlb_WPL;
+    float min_mbb_WPM;
+    float min_mlb_WPM;
+    float min_mbb_WPT;
+    float min_mlb_WPT;
 
     // Event loop
     // Declare variables outside of the event loop
@@ -475,11 +477,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
             
             if (is_btagged == 0 && PFMET_pt_final > 50.) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
             if (is_btagged > 0 && PFMET_pt_final > 50.) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        }
         if (is_btagged == 0) njet_ct++;
         if (is_btagged >= 1) nbjet_ct.at(0)++;
         if (is_btagged >= 2) nbjet_ct.at(1)++;
         if (is_btagged >= 3) nbjet_ct.at(2)++;
+        }
       }
       //std::cout << "5" << endl;
       TLorentzVector lep1;
@@ -500,9 +502,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         if (PFMET_pt_final > 50.) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
 
         // lt2 eq2 gt2 categories
-        if ((i_bjet == 0) && (nbjet >= 2)) continue;
-        if ((i_bjet == 1) && (nbjet != 2)) continue;
-        if ((i_bjet == 2) && (nbjet <= 2)) continue;
+        // TODO: fix LMT working points
+        // currently loose
+        if ((i_bjet == 0) && (nbjet_ct.at(0) >= 2)) continue;
+        if ((i_bjet == 1) && (nbjet_ct.at(0) != 2)) continue;
+        if ((i_bjet == 2) && (nbjet_ct.at(0) <= 2)) continue;
 
         if (PFMET_pt_final > 50.) {
           h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
@@ -517,8 +521,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
           // dilepton hists
           h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
           h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
         }
         h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
         h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
