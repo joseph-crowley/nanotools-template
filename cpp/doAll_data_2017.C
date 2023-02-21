@@ -11,7 +11,7 @@
     chData_2017->Add((FILEDIR + "/2017C/Run2017C*145.root").data());
     chData_2017->Add((FILEDIR + "/2017D/Run2017D*68.root").data());
     chData_2017->Add((FILEDIR + "/2017E/Run2017E*51.root").data());
-    ScanChain(chData_2017, sample_strData_2017, "outputs/plots", "outputs/data");
+    ScanChain(chData_2017, sample_strData_2017, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/data");
 
 
 }

@@ -8,7 +8,7 @@
 
 // change the dirname here to set the output dir. 
 std::string get_dirName() {
-    std::string dirName = "/home/users/crowley/public_html/tttt/2023_02_14_analyze_bjets_stacked";
+    std::string dirName = "/home/users/crowley/public_html/tttt/2023_02_17_analyze_bjets_stacked_17_18";
     return dirName;
 }
 
@@ -140,8 +140,7 @@ void clearDirectory(const std::string& dirName)
 }
 
 
-std::string directory_tools() {
-    std::string dirName = get_dirName();
+std::string directory_tools(std::string dirName) {
     //std::cout << "Using dirName " << dirName << endl;
     //std::cout << "Change dirName in directory_tools.C"  << endl;
     if (directoryExists(dirName))

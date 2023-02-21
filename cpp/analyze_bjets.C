@@ -513,10 +513,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
         // lt2 eq2 gt2 categories
         // TODO: fix LMT working points
-        // currently medium
-        if ((i_bjet == 0) && (nbjet_ct.at(1) >= 2)) continue;
-        if ((i_bjet == 1) && (nbjet_ct.at(1) != 2)) continue;
-        if ((i_bjet == 2) && (nbjet_ct.at(1) <= 2)) continue;
+        // currently loose
+        if ((i_bjet == 0) && (nbjet_ct.at(0) >= 2)) continue;
+        if ((i_bjet == 1) && (nbjet_ct.at(0) != 2)) continue;
+        if ((i_bjet == 2) && (nbjet_ct.at(0) <= 2)) continue;
 
         if (PFMET_pt_final > 50.) {
           h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);

@@ -9,21 +9,21 @@
     chTTV->Add((FILEDIR + "/2016_APV/TTH_HToNonBB*4.root").data());
     chTTV->Add((FILEDIR + "/2016_APV/TTW_lnu*6.root").data());
     chTTV->Add((FILEDIR + "/2016_APV/TTZ_2l2nu_M_10*12.root").data());
-    ScanChain(chTTV, sample_strTTV, "outputs/plots", "outputs/mc");
+    ScanChain(chTTV, sample_strTTV, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
     // Category TT_lnu
     TChain *chTT_lnu = new TChain("Events");
     std::string sample_strTT_lnu("2016_APV_TT_lnu");
     chTT_lnu->Add((FILEDIR + "/2016_APV/TT_lnu_nlo*265.root").data());
-    ScanChain(chTT_lnu, sample_strTT_lnu, "outputs/plots", "outputs/mc");
+    ScanChain(chTT_lnu, sample_strTT_lnu, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
     // Category TT_2l2nu
     TChain *chTT_2l2nu = new TChain("Events");
     std::string sample_strTT_2l2nu("2016_APV_TT_2l2nu");
     chTT_2l2nu->Add((FILEDIR + "/2016_APV/TT_2l2nu*76.root").data());
-    ScanChain(chTT_2l2nu, sample_strTT_2l2nu, "outputs/plots", "outputs/mc");
+    ScanChain(chTT_2l2nu, sample_strTT_2l2nu, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
     // Category ST_tW
@@ -31,14 +31,14 @@
     std::string sample_strST_tW("2016_APV_ST_tW");
     chST_tW->Add((FILEDIR + "/2016_APV/ST_tW_antitop_5f_NoFullyHadronicDecays*6.root").data());
     chST_tW->Add((FILEDIR + "/2016_APV/ST_tW_top_5f_NoFullyHadronicDecays*6.root").data());
-    ScanChain(chST_tW, sample_strST_tW, "outputs/plots", "outputs/mc");
+    ScanChain(chST_tW, sample_strST_tW, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
     // Category WW
     TChain *chWW = new TChain("Events");
     std::string sample_strWW("2016_APV_WW");
     chWW->Add((FILEDIR + "/2016_APV/qqWW_2l2nu*6.root").data());
-    ScanChain(chWW, sample_strWW, "outputs/plots", "outputs/mc");
+    ScanChain(chWW, sample_strWW, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
     // Category Others
@@ -73,7 +73,7 @@
     chOthers->Add((FILEDIR + "/2016_APV/qqWZ_3lnu_POWHEG*2.root").data());
     chOthers->Add((FILEDIR + "/2016_APV/qqZG_ll_01j*41.root").data());
     chOthers->Add((FILEDIR + "/2016_APV/qqZZ_4l*68.root").data());
-    ScanChain(chOthers, sample_strOthers, "outputs/plots", "outputs/mc");
+    ScanChain(chOthers, sample_strOthers, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/mc");
 
 
 }
