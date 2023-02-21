@@ -1,6 +1,6 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #include "TFile.h"
-#include "TH1F.h"
+#include "TH1D.h"
 #include "TTree.h"
 #include "TChain.h"
 #include "TTreeCache.h"
@@ -33,9 +33,9 @@ using namespace PlottingHelpers;
 #define COUNT_GT(vec,num) std::count_if((vec).begin(), (vec).end(), [](float x) { return x > (num); });
 #define COUNT_LT(vec,num) std::count_if((vec).begin(), (vec).end(), [](float x) { return x < (num); });
 
-#define H1(name,nbins,low,high) TH1F *h_##name = new TH1F(#name,#name,nbins,low,high);
+#define H1(name,nbins,low,high) TH1D *h_##name = new TH1D(#name,#name,nbins,low,high);
 #define H1vec(name,nbins,low,high) \
-  std::vector<TH1F *> h_##name ; \
+  std::vector<TH1D *> h_##name ; \
   for (unsigned int i=0; i<3; i++){ \
     /* name the categories lt2 eq2 gt2 */ \
     std::string catname = #name; \
@@ -49,7 +49,7 @@ using namespace PlottingHelpers;
       else if (i==1) catname += "_nb_eq2"; \
       else if (i==2) catname += "_nb_gt2"; \
     }\
-    h_##name.push_back(new TH1F(catname.c_str(),catname.c_str(),nbins,low,high)); \
+    h_##name.push_back(new TH1D(catname.c_str(),catname.c_str(),nbins,low,high)); \
   }
 
 // #define DEBUG
@@ -122,12 +122,13 @@ string getHistogramName(string hname){
     else {
         std::cout << "hname not recognized" << endl;
         std::cout << hname << endl;
+        return hname;
     }
 
     return hname_latex;
 }
 
-void addTextToMarkers(TH1F *hist) {
+void addTextToMarkers(TH1D *hist) {
    for (int i = 1; i <= hist->GetNbinsX(); i++) {
       float value = hist->GetBinContent(i);
       if (value == 0) continue; // don't add text for empty bins
@@ -139,7 +140,7 @@ void addTextToMarkers(TH1F *hist) {
    }
 }
 
-void plotVariable(std::vector<TH1F*> const& h_vars, string sample_str, string plotDir) {
+void plotVariable(std::vector<TH1D*> const& h_vars, string sample_str, string plotDir) {
     //std::cout << "Plot Variable" << endl;
     for (auto const& h_var: h_vars){
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
@@ -167,21 +168,21 @@ double getStackIntegral(THStack* stack)
    double total_integral = 0.0;
    TList* hist_list = stack->GetHists();
    TIter next(hist_list);
-   TH1F* hist;
-   while ((hist = (TH1F*)next())) {
+   TH1D* hist;
+   while ((hist = (TH1D*)next())) {
       total_integral += hist->Integral();
    }
    return total_integral;
 }
 
 
-void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, string plotDir, std::vector<pair<int, TH1F*> > hists_sorted, vector<string> legend_entries) {
-  std::cout << "Make Ratio Plot, given hs integral = "<< getStackIntegral(hs) << endl;
+void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
+  //std::cout << "Make Ratio Plot, given hs integral = "<< getStackIntegral(hs) << endl;
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
-  cout << "Preparing canvas " << canvasname << "..." << endl;
+  //cout << "Preparing canvas " << canvasname << "..." << endl;
 
   float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
   float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
@@ -205,7 +206,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
   h_data->Draw("e1p same");
 
   // get the last histogram in the stack (i.e. the MC histogram)
-  TH1F* h_mc = (TH1F*)hs->GetStack()->Last();
+  TH1D* h_mc = (TH1D*)hs->GetStack()->Last();
 
   // create a legend
   // fill the legend in reverse order
@@ -264,7 +265,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
 
   // make a ratio plot in the bottom pad
   plot.getInsidePanels()[0][0]->cd();
-  TH1F* h_ratio = (TH1F*)h_data->Clone("h_ratio");
+  TH1D* h_ratio = (TH1D*)h_data->Clone("h_ratio");
   h_ratio->SetTitle("");
   h_ratio->Divide(h_mc);
   h_ratio->SetMarkerStyle(20);
@@ -273,7 +274,7 @@ void makeRatioPlot(THStack* hs, TH1F* h_Others, TH1F* h_data, string hname, stri
   h_ratio->SetLineColor(kBlack);
   //float RATIO_MAX = std::min(10., h_ratio->GetMaximum()*1.2);
   //float RATIO_MIN = std::min(0.5, h_ratio->GetMinimum()*0.8);
-  float RATIO_MAX = 1.2;
+  float RATIO_MAX = 1.4;
   float RATIO_MIN = 0.6;
   h_ratio->SetMaximum(RATIO_MAX);
   h_ratio->SetMinimum(RATIO_MIN);
@@ -408,6 +409,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     float event_wgt_triggers_dilepton_matched;
     ch->SetBranchAddress("event_wgt_triggers_dilepton_matched", &event_wgt_triggers_dilepton_matched);
 
+    float event_wgt_TTxsec = 1.;
+    if (sample_str.find("TT_") != std::string::npos) event_wgt_TTxsec = 0.826;
     float event_wgt_SFs_btagging;
     ch->SetBranchAddress("event_wgt_SFs_btagging", &event_wgt_SFs_btagging);
 
@@ -469,18 +472,25 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       for (unsigned int i = 0; i < njet; i++) {
         // is_btagged is an unsigned char 
         // defined by int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight)
-        auto const& is_btagged = jet_is_btagged->at(i);
+        auto is_btagged = jet_is_btagged->at(i);
         auto const& pt = jet_pt->at(i);
-        float const pt_threshold = (is_btagged ? 25. : 40.);
+        // TODO: add thresholds and WPs as arguments instead
+        constexpr float pt_threshold_btagged = 40.;
+        constexpr float pt_threshold_unbtagged = 25.;
+        float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
+        if (is_btagged && pt < pt_threshold) is_btagged = 0;
+        pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (pt > pt_threshold) {
             Ht += pt;
             
-            if (is_btagged == 0 && PFMET_pt_final > 50.) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-            if (is_btagged > 0 && PFMET_pt_final > 50.) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        if (is_btagged == 0) njet_ct++;
-        if (is_btagged >= 1) nbjet_ct.at(0)++;
-        if (is_btagged >= 2) nbjet_ct.at(1)++;
-        if (is_btagged >= 3) nbjet_ct.at(2)++;
+            if (PFMET_pt_final < 50.) continue;
+
+            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+            if (is_btagged == 0) njet_ct++;
+            if (is_btagged >= 1) nbjet_ct.at(0)++;
+            if (is_btagged >= 2) nbjet_ct.at(1)++;
+            if (is_btagged >= 3) nbjet_ct.at(2)++;
         }
       }
       //std::cout << "5" << endl;
@@ -499,38 +509,38 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         //std::cout << "Filling histograms: " << i_bjet << endl;
 
         // coincidentally there are 3 WPs and 3 categories, so no need to loop twice. i_bjet = loose, med, tight
-        if (PFMET_pt_final > 50.) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        if (PFMET_pt_final > 50.) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
 
         // lt2 eq2 gt2 categories
         // TODO: fix LMT working points
-        // currently loose
-        if ((i_bjet == 0) && (nbjet_ct.at(0) >= 2)) continue;
-        if ((i_bjet == 1) && (nbjet_ct.at(0) != 2)) continue;
-        if ((i_bjet == 2) && (nbjet_ct.at(0) <= 2)) continue;
+        // currently medium
+        if ((i_bjet == 0) && (nbjet_ct.at(1) >= 2)) continue;
+        if ((i_bjet == 1) && (nbjet_ct.at(1) != 2)) continue;
+        if ((i_bjet == 2) && (nbjet_ct.at(1) <= 2)) continue;
 
         if (PFMET_pt_final > 50.) {
-          h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
       
           // dilepton hists
-          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
           //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
         }
-        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
-        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
       }
     }
 
     //std::cout << "rebinning histograms" << endl;
-    std::vector<std::vector<TH1F *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
+    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
     
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
@@ -603,11 +613,11 @@ WRITE_HISTOGRAMS
 // define a compareHists function for comparing the histograms 
 // from different samples by integrating over the bins
 // and making a plot
-// takes a two <pair<int, TH1F*> > as input 
-bool compareHists(pair<int, TH1F*> p1, pair<int, TH1F*> p2){
+// takes a two <pair<int, TH1D*> > as input 
+bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
     // get the histograms
-    TH1F* h1 = p1.second;
-    TH1F* h2 = p2.second;
+    TH1D* h1 = p1.second;
+    TH1D* h2 = p2.second;
     
     // get the number of bins
     int nbins = h1->GetNbinsX();
@@ -646,24 +656,24 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // save the stacked histograms to a root file
 
     // get the histogram name in latex format
-    std::cout << "get hist name: ";
+    //std::cout << "get hist name: ";
     string hname_latex = getHistogramName(hname);
-    std::cout << hname_latex << endl;
+    //std::cout << hname_latex << endl;
 
     // separate data and Others
-    TH1F* h_data = NULL;
+    TH1D* h_data = NULL;
     string entry_data;
-    TH1F* h_Others = NULL;
+    TH1D* h_Others = NULL;
     string entry_Others;
-    vector<TH1F*> hists;
+    vector<TH1D*> hists;
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
         TFile* f = new TFile(rootFiles[i].data());
-        std::cout << "file " << f->GetName() << endl;
-        std::cout << "get " << hname << endl;
-        TH1F* h = (TH1F*)f->Get(hname.data());
-        if (h) std::cout << "got " << hname << endl;
-        else std::cout << "failed " << hname << endl;
+        //std::cout << "file " << f->GetName() << endl;
+        //std::cout << "get " << hname << endl;
+        TH1D* h = (TH1D*)f->Get(hname.data());
+        //if (h) std::cout << "got " << hname << endl;
+        //else std::cout << "failed " << hname << endl;
     
 
         // create a vector of legend entries from the root file names
@@ -702,22 +712,22 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         }
 
     
-        std::cout << "adding hist to hists " << hname << endl;
+        //std::cout << "adding hist to hists " << hname << endl;
         hists.push_back(h);
         legend_entries.push_back(entry);
-        std::cout << "added hist to hists " << hname << endl;
+        //std::cout << "added hist to hists " << hname << endl;
     }
 
     // sort the hists by integral
     // smallest integral on top
     // keep track of the indices of the sorted histograms
     // by using a vector of pairs
-    std::cout << "creating hist pairs" << endl;
-    vector<pair<int, TH1F*> > hists_sorted;
+    //std::cout << "creating hist pairs" << endl;
+    vector<pair<int, TH1D*> > hists_sorted;
     for(int i = 0; i < hists.size(); i++){
         hists_sorted.emplace_back(i, hists[i]);
     }
-    std::cout << "created hist pairs" << endl;
+    //std::cout << "created hist pairs" << endl;
     sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
 
     // create a vector of colors hopefully larger than the number of histograms
@@ -730,17 +740,17 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     colors.push_back(kCyan);
 
     // stack the histograms and make a plot
-    std::cout << "create canvas" << endl;
+    //std::cout << "create canvas" << endl;
     TCanvas *c = new TCanvas(hname.data(),"", 1000,800);
     c->cd();
     THStack *hs = new THStack(hname.data(),"");
     TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
-    std::cout << "creates canvas and stack" << endl;
+    //std::cout << "creates canvas and stack" << endl;
 
     // add the Others histogram first
     if (h_Others) { 
-        std::cout << "stack Others hist" << endl;
-        std::cout << "size of hists " << hists_sorted.size() << endl;
+        //std::cout << "stack Others hist" << endl;
+        //std::cout << "size of hists " << hists_sorted.size() << endl;
         
         h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
         h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
@@ -754,14 +764,14 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
         // set line color slightly lighter than fill color
-        std::cout << "stack hist" << hists_sorted[i].second->GetName() << endl;
+        //std::cout << "stack hist" << hists_sorted[i].second->GetName() << endl;
         hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
         hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
         hists_sorted[i].second->SetLineWidth(1);
         hists_sorted[i].second->SetFillStyle(3001);
         hists_sorted[i].second->GetXaxis()->SetTitle("");
         hs->Add(hists_sorted[i].second);
-        std::cout << "stacked hist" << hists_sorted[i].second->GetName() << endl;
+        //std::cout << "stacked hist" << hists_sorted[i].second->GetName() << endl;
     }
 
 
