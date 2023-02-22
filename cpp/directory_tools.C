@@ -8,7 +8,7 @@
 
 // change the dirname here to set the output dir. 
 std::string get_dirName() {
-    std::string dirName = "/home/users/crowley/public_html/tttt/2023_02_17_analyze_bjets_stacked_17_18";
+    std::string dirName = "/home/users/crowley/public_html/tttt/2023_02_17_analyze_bjets_stacked";
     return dirName;
 }
 

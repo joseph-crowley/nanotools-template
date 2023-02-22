@@ -9,7 +9,7 @@
     chData_2016->Add((FILEDIR + "/2016G/Run2016G*.root").data());
     chData_2016->Add((FILEDIR + "/2016F_NonAPV/Run2016F*.root").data());
     chData_2016->Add((FILEDIR + "/2016H/Run2016H*86.root").data());
-    ScanChain(chData_2016, sample_strData_2016, "outputs_WPL_bpt40_jpt25/plots", "outputs_WPL_bpt40_jpt25/data");
+    ScanChain(chData_2016, sample_strData_2016, "outputs/plots", "outputs/data");
 
 
 }
