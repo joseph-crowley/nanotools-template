@@ -1,3 +1,7 @@
+
+# keep track of runtimes
+start_time=$(date +%s)
+
 cd ~/tttt/CMSSW_10_6_26/src/tttt; cmsenv; eval $(./setup.sh env); cd -
 
 # back up the logs/ and output/ directories if they exist
@@ -32,39 +36,73 @@ touch logs/stack_2016_APV.log
 touch logs/stack_2017.log
 touch logs/stack_2018.log
 
+# keep track of runtimes
+setup_time=$(date +%s)
+elapsed_time=$((setup_time-start_time))
+echo "Setup took $elapsed_time seconds."
+
 
 # Compile the macro
-#rqlb compile_scripts.C > logs/compile_scripts.log 2>&1 
+echo "Compiling scripts..."
 rm analyze_bjets_C.so
 rm directory_tools_C.so
 root -l -b -q -e .L analyze_bjets.C+ > logs/compile_scripts.log 2>&1 
 root -l -b -q -e .L directory_tools.C+ > logs/compile_scripts.log 2>&1 
 
+# keep track of runtimes
+compilation_time=$(date +%s)
+elapsed_time=$((compilation_time-setup_time))
+echo "Compilation took $elapsed_time seconds."
+echo ""
+
+
 # Make Histograms: Data
-rqlb doAll_data_NonAPV_2016.C > logs/doAll_data_NonAPV_2016.log 2>&1 &
-rqlb doAll_data_APV_2016.C > logs/doAll_data_APV_2016.log 2>&1 &
-rqlb doAll_data_2017.C > logs/doAll_data_2017.log 2>&1 &
-rqlb doAll_data_2018.C > logs/doAll_data_2018.log 2>&1 &
+echo "Starting histogramming scripts..."
+root -q -l -b doAll_data_NonAPV_2016.C > logs/doAll_data_NonAPV_2016.log 2>&1 &
+root -q -l -b doAll_data_APV_2016.C > logs/doAll_data_APV_2016.log 2>&1 &
+root -q -l -b doAll_data_2017.C > logs/doAll_data_2017.log 2>&1 &
+root -q -l -b doAll_data_2018.C > logs/doAll_data_2018.log 2>&1 &
 
 # Make Histograms: MC
-rqlb doAll_mc_2016_NonAPV.C > logs/doAll_mc_2016_NonAPV.log 2>&1 &
-rqlb doAll_mc_2016_APV.C > logs/doAll_mc_2016_APV.log 2>&1 &
-rqlb doAll_mc_2017.C > logs/doAll_mc_2017.log 2>&1 &
-rqlb doAll_mc_2018.C > logs/doAll_mc_2018.log 2>&1 &
+root -q -l -b doAll_mc_2016_NonAPV.C > logs/doAll_mc_2016_NonAPV.log 2>&1 &
+root -q -l -b doAll_mc_2016_APV.C > logs/doAll_mc_2016_APV.log 2>&1 &
+root -q -l -b doAll_mc_2017.C > logs/doAll_mc_2017.log 2>&1 &
+root -q -l -b doAll_mc_2018.C > logs/doAll_mc_2018.log 2>&1 &
 
 # give it time to run
 echo "All histogramming scripts have begun. View the logs in logs/*"
+echo ""
+echo "The following output is from the background processes:"
 wait 
-echo "All histogramming scripts have completed. Beginning to plot..."
+
+# keep track of runtimes
+histogramming_time=$(date +%s)
+elapsed_time=$((histogramming_time-compilation_time))
+echo ""
+echo "All histogramming scripts completed in $elapsed_time seconds."
+echo ""
+
 
 # Plotting the Histograms 
-rqlb stack_2016_NonAPV.C > logs/stack_2016_NonAPV.log 2>&1 &
-rqlb stack_2016_APV.C > logs/stack_2016_APV.log 2>&1 &
-rqlb stack_2017.C > logs/stack_2017.log 2>&1 &
-rqlb stack_2018.C > logs/stack_2018.log 2>&1 &
-#rqlb stack_17_18.C > logs/stack_17_18.log 2>&1 &
+echo "Beginning to plot..."
+root -q -l -b stack_2016_NonAPV.C > logs/stack_2016_NonAPV.log 2>&1 &
+root -q -l -b stack_2016_APV.C > logs/stack_2016_APV.log 2>&1 &
+root -q -l -b stack_2017.C > logs/stack_2017.log 2>&1 &
+root -q -l -b stack_2018.C > logs/stack_2018.log 2>&1 &
 
 # give it time to run
 echo "All plotting scripts have begun. View the logs in logs/*"
+echo ""
+echo "The following output is from the background processes:"
 wait
-echo "All plotting scripts have completed."
+
+# keep track of runtimes
+plotting_time=$(date +%s)
+elapsed_time=$((plotting_time-histogramming_time))
+echo ""
+echo "All plotting scripts have completed in $elapsed_time seconds."
+echo ""
+
+finish_time=$(date +%s)
+elapsed_time=$((finish_time-start_time))
+echo "Full processing took $elapsed_time seconds."
