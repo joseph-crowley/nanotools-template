@@ -14,6 +14,22 @@ fi
 mkdir -p logs/
 mkdir -p outputs/ outputs/data outputs/mc outputs/plots
 
+# create the log files so that 'tail -f logs/*' works  
+touch logs/doAll_data_NonAPV_2016.log
+touch logs/doAll_data_APV_2016.log
+touch logs/doAll_data_2017.log
+touch logs/doAll_data_2018.log
+
+touch logs/doAll_mc_NonAPV_2016.log
+touch logs/doAll_mc_APV_2016.log
+touch logs/doAll_mc_2017.log
+touch logs/doAll_mc_2018.log
+
+touch logs/stack_2016_NonAPV.log
+touch logs/stack_2016_APV.log
+touch logs/stack_2017.log
+touch logs/stack_2018.log
+
 # Make Histograms: Data
 rqlb doAll_data_NonAPV_2016.C > logs/doAll_data_NonAPV_2016.log 2>&1 &
 rqlb doAll_data_APV_2016.C > logs/doAll_data_APV_2016.log 2>&1 &
