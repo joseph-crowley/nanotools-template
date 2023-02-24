@@ -31,14 +31,14 @@
  STACK_HIST("lep2_eta_nb_lt2")\
  STACK_HIST("lep2_phi_nb_lt2")\
  STACK_HIST("pt_ll_nb_lt2")\
- STACK_HIST("h_nPVs_nb_lt2")\
- STACK_HIST("h_nPVs_good_nb_lt2")\
- STACK_HIST("h_nleptons_fakeable_nb_lt2")\
- STACK_HIST("h_nleptons_loose_nb_lt2")\
- STACK_HIST("h_nelectrons_fakeable_nb_lt2")\
- STACK_HIST("h_nelectrons_loose_nb_lt2")\
- STACK_HIST("h_nmuons_fakeable_nb_lt2")\
- STACK_HIST("h_nmuons_loose_nb_lt2")
+ STACK_HIST("nPVs_nb_lt2")\
+ STACK_HIST("nPVs_good_nb_lt2")\
+ STACK_HIST("nleptons_fakeable_nb_lt2")\
+ STACK_HIST("nleptons_loose_nb_lt2")\
+ STACK_HIST("nelectrons_fakeable_nb_lt2")\
+ STACK_HIST("nelectrons_loose_nb_lt2")\
+ STACK_HIST("nmuons_fakeable_nb_lt2")\
+ STACK_HIST("nmuons_loose_nb_lt2")
  //STACK_HIST("m_lb_nb_lt2")
 
 #define STACK_HISTS_NB_CATEGORIES_EQ0 \
@@ -53,14 +53,14 @@
  STACK_HIST("lep2_eta_nb_eq0")\
  STACK_HIST("lep2_phi_nb_eq0")\
  STACK_HIST("pt_ll_nb_eq0")\
- STACK_HIST("h_nPVs_nb_eq0")\
- STACK_HIST("h_nPVs_good_nb_eq0")\
- STACK_HIST("h_nleptons_fakeable_nb_eq0")\
- STACK_HIST("h_nleptons_loose_nb_eq0")\
- STACK_HIST("h_nelectrons_fakeable_nb_eq0")\
- STACK_HIST("h_nelectrons_loose_nb_eq0")\
- STACK_HIST("h_nmuons_fakeable_nb_eq0")\
- STACK_HIST("h_nmuons_loose_nb_eq0")
+ STACK_HIST("nPVs_nb_eq0")\
+ STACK_HIST("nPVs_good_nb_eq0")\
+ STACK_HIST("nleptons_fakeable_nb_eq0")\
+ STACK_HIST("nleptons_loose_nb_eq0")\
+ STACK_HIST("nelectrons_fakeable_nb_eq0")\
+ STACK_HIST("nelectrons_loose_nb_eq0")\
+ STACK_HIST("nmuons_fakeable_nb_eq0")\
+ STACK_HIST("nmuons_loose_nb_eq0")
  //STACK_HIST("m_lb_nb_eq0")
 
 #define STACK_HISTS_NB_CATEGORIES_EQ1 \
@@ -75,14 +75,14 @@
  STACK_HIST("lep2_eta_nb_eq1")\
  STACK_HIST("lep2_phi_nb_eq1")\
  STACK_HIST("pt_ll_nb_eq1")\
- STACK_HIST("h_nPVs_nb_eq1")\
- STACK_HIST("h_nPVs_good_nb_eq1")\
- STACK_HIST("h_nleptons_fakeable_nb_eq1")\
- STACK_HIST("h_nleptons_loose_nb_eq1")\
- STACK_HIST("h_nelectrons_fakeable_nb_eq1")\
- STACK_HIST("h_nelectrons_loose_nb_eq1")\
- STACK_HIST("h_nmuons_fakeable_nb_eq1")\
- STACK_HIST("h_nmuons_loose_nb_eq1")
+ STACK_HIST("nPVs_nb_eq1")\
+ STACK_HIST("nPVs_good_nb_eq1")\
+ STACK_HIST("nleptons_fakeable_nb_eq1")\
+ STACK_HIST("nleptons_loose_nb_eq1")\
+ STACK_HIST("nelectrons_fakeable_nb_eq1")\
+ STACK_HIST("nelectrons_loose_nb_eq1")\
+ STACK_HIST("nmuons_fakeable_nb_eq1")\
+ STACK_HIST("nmuons_loose_nb_eq1")
  //STACK_HIST("m_lb_nb_eq1")
 
 #define STACK_HISTS_NB_CATEGORIES_EQ2 \
@@ -97,14 +97,14 @@
  STACK_HIST("lep2_eta_nb_eq2")\
  STACK_HIST("lep2_phi_nb_eq2")\
  STACK_HIST("pt_ll_nb_eq2")\
- STACK_HIST("h_nPVs_nb_eq2")\
- STACK_HIST("h_nPVs_good_nb_eq2")\
- STACK_HIST("h_nleptons_fakeable_nb_eq2")\
- STACK_HIST("h_nleptons_loose_nb_eq2")\
- STACK_HIST("h_nelectrons_fakeable_nb_eq2")\
- STACK_HIST("h_nelectrons_loose_nb_eq2")\
- STACK_HIST("h_nmuons_fakeable_nb_eq2")\
- STACK_HIST("h_nmuons_loose_nb_eq2")
+ STACK_HIST("nPVs_nb_eq2")\
+ STACK_HIST("nPVs_good_nb_eq2")\
+ STACK_HIST("nleptons_fakeable_nb_eq2")\
+ STACK_HIST("nleptons_loose_nb_eq2")\
+ STACK_HIST("nelectrons_fakeable_nb_eq2")\
+ STACK_HIST("nelectrons_loose_nb_eq2")\
+ STACK_HIST("nmuons_fakeable_nb_eq2")\
+ STACK_HIST("nmuons_loose_nb_eq2")
  //STACK_HIST("m_lb_nb_eq2")
 
 #define STACK_HISTS_NB_CATEGORIES_GT2 \
@@ -119,14 +119,14 @@
  STACK_HIST("lep2_eta_nb_gt2")\
  STACK_HIST("lep2_phi_nb_gt2")\
  STACK_HIST("pt_ll_nb_gt2")\
- STACK_HIST("h_nPVs_nb_gt2")\
- STACK_HIST("h_nPVs_good_nb_gt2")\
- STACK_HIST("h_nleptons_fakeable_nb_gt2")\
- STACK_HIST("h_nleptons_loose_nb_gt2")\
- STACK_HIST("h_nelectrons_fakeable_nb_gt2")\
- STACK_HIST("h_nelectrons_loose_nb_gt2")\
- STACK_HIST("h_nmuons_fakeable_nb_gt2")\
- STACK_HIST("h_nmuons_loose_nb_gt2")
+ STACK_HIST("nPVs_nb_gt2")\
+ STACK_HIST("nPVs_good_nb_gt2")\
+ STACK_HIST("nleptons_fakeable_nb_gt2")\
+ STACK_HIST("nleptons_loose_nb_gt2")\
+ STACK_HIST("nelectrons_fakeable_nb_gt2")\
+ STACK_HIST("nelectrons_loose_nb_gt2")\
+ STACK_HIST("nmuons_fakeable_nb_gt2")\
+ STACK_HIST("nmuons_loose_nb_gt2")
  //STACK_HIST("m_lb_nb_gt2")
  
 

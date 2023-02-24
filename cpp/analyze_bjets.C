@@ -480,10 +480,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     std::vector<float> *lep_mass = 0;
     ch->SetBranchAddress("leptons_mass", &lep_mass);
     
-    unsigned int nPVs;
+    int nPVs;
     ch->SetBranchAddress("nPVs", &nPVs);
 
-    unsigned int nPVs_good;
+    int nPVs_good;
     ch->SetBranchAddress("nPVs_good", &nPVs_good);
 
     unsigned int nelectrons_fakeable;
@@ -547,8 +547,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
             
             if (PFMET_pt_final < 50.) continue;
 
-            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
             if (is_btagged == 0) njet_ct++;
             if (is_btagged >= 1) nbjet_ct.at(0)++; // loose
             if (is_btagged >= 2) nbjet_ct.at(1)++; // medium
@@ -568,7 +568,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
 
         // there are 3 WPs and 5 NB categories, so no need to loop twice. i_bjet = loose, med, tight
-        if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
 
         // NB Categories: lt2 eq2 gt2 eq1 eq0
         switch (i_bjet) {
@@ -594,42 +594,42 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
         if (PFMET_pt_final > 50.) {
 
-          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           
           // lepton hists
-          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
       
           // dilepton hists
-          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
 
           // Primary vertex hists 
-            h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           
           // fakeable and loose lepton hists
           // nleptons_fakeable, nleptons_loose 
-            h_nleptons_fakeable.at(i_bjet)->Fill(nleptons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nleptons_loose.at(i_bjet)->Fill(nleptons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nleptons_fakeable.at(i_bjet)->Fill(nleptons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nleptons_loose.at(i_bjet)->Fill(nleptons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
 
           // nelectrons_fakeable, nelectrons_loose 
-            h_nelectrons_fakeable.at(i_bjet)->Fill(nelectrons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nelectrons_loose.at(i_bjet)->Fill(nelectrons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nelectrons_fakeable.at(i_bjet)->Fill(nelectrons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nelectrons_loose.at(i_bjet)->Fill(nelectrons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
 
           // nmuons_fakeable, nmuons_loose 
-            h_nmuons_fakeable.at(i_bjet)->Fill(nmuons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nmuons_loose.at(i_bjet)->Fill(nmuons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nmuons_fakeable.at(i_bjet)->Fill(nmuons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nmuons_loose.at(i_bjet)->Fill(nmuons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
 
         }
-        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
       }
     }
 
