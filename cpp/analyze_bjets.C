@@ -67,7 +67,6 @@ using namespace std;
 //using namespace tas;
 
 string getHistogramName(string hname){
-    //std::cout << "getHistogramName" << endl;
     // get the sample name from the root file name
     // remove the path and the .root extension
     string hname_latex = "";
@@ -156,7 +155,6 @@ void addTextToMarkers(TH1D *hist) {
 }
 
 void plotVariable(std::vector<TH1D*> const& h_vars, string sample_str, string plotDir) {
-    //std::cout << "Plot Variable" << endl;
     for (auto const& h_var: h_vars){
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
       varPlot->cd();
@@ -192,12 +190,10 @@ double getStackIntegral(THStack* stack)
 
 
 void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
-  //std::cout << "Make Ratio Plot, given hs integral = "<< getStackIntegral(hs) << endl;
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
-  //cout << "Preparing canvas " << canvasname << "..." << endl;
 
   float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
   float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
@@ -341,8 +337,6 @@ void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, stri
   tex->DrawLatex(0.15, 0.75, cut_string.c_str());
 
   // save the plot to file
-  //std::cout << plotDir << "/" << canvasname << endl;
-  //std::cout << "Make Ratio Plot, stack integral = "<< getStackIntegral(hs) << endl;
  
   plot.save(plotDir, "png"); 
   plot.save(plotDir, "pdf"); 
@@ -350,7 +344,6 @@ void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, stri
  
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
-    //std::cout << "ScanChain" << std::endl;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
     TObjArray *listOfFiles = ch->GetListOfFiles();
@@ -369,7 +362,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     const int NUM_NB_CATEGORIES = 5;
     const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
 
-    //std::cout << "Making histograms" << std::endl;
     int const njet_nbin = 7;
     H1vec(njet,njet_nbin,0,njet_nbin);
 
@@ -381,7 +373,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     int const nbjet_nbin = 7;
     H1vec(nbjet,nbjet_nbin,0,nbjet_nbin);
-//    std::cout << "2" << endl;
 
     int const met_nbin = 40;
     H1vec(met,met_nbin,0,1000);
@@ -406,7 +397,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     H1vec(lep2_phi,lep2_phi_nbin,-3.2,3.2);
     
     // dilepton histograms
-
     int const pt_ll_nbin = 100;
     H1vec(pt_ll,pt_ll_nbin,0,1000);
 
@@ -418,11 +408,41 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     H1vec(m_lb,m_lb_nbin,0,1000);
     H1vec(m_bb,m_bb_nbin,0,1000);
 
+
+    // Primary vertex histograms
+    int const nPV_nbin = 50;
+    H1vec(nPVs,nPV_nbin,0,50);
+
+    int const nPV_good_nbin = 50;
+    H1vec(nPVs_good,nPV_good_nbin,0,50);
+
+    // fakeable and loose lepton histograms
+    int const nleptons_loose_nbin = 5;
+    int const nmuons_loose_nbin = 5;
+    int const nelectrons_loose_nbin = 5;
+    H1vec(nleptons_loose,nleptons_loose_nbin,0,5);
+    H1vec(nmuons_loose,nmuons_loose_nbin,0,5);
+    H1vec(nelectrons_loose,nelectrons_loose_nbin,0,5);
+
+    int const nleptons_fakeable_nbin = 5;
+    int const nelectrons_fakeable_nbin = 5;
+    int const nmuons_fakeable_nbin = 5;
+    H1vec(nleptons_fakeable,nleptons_fakeable_nbin,0,5);
+    H1vec(nelectrons_fakeable,nelectrons_fakeable_nbin,0,5);
+    H1vec(nmuons_fakeable,nmuons_fakeable_nbin,0,5);
+
     // set up branches
-    //std::cout << "Setting up branches" << std::endl;
 
     float event_wgt;
     ch->SetBranchAddress("event_wgt", &event_wgt);
+
+    // TODO: add a weighted category, PU or no PU
+    float event_wgt_noPU;
+    ch->SetBranchAddress("event_wgt_noPU", &event_wgt_noPU);
+
+    // TODO: use this for the event weights (expect 5% effect in 16+17)
+    float event_wgt_adjustment_L1Prefiring;
+    ch->SetBranchAddress("event_wgt_adjustment_L1Prefiring", &event_wgt_adjustment_L1Prefiring);
 
     float event_wgt_triggers_dilepton_matched;
     ch->SetBranchAddress("event_wgt_triggers_dilepton_matched", &event_wgt_triggers_dilepton_matched);
@@ -431,14 +451,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     //if (sample_str.find("TT_") != std::string::npos) event_wgt_xsecCORRECTION = 0.826;
     // tW xsec was using the wrong BR. needs the BR for "NoFullyHadronicDecays"
     if (sample_str.find("ST_") != std::string::npos) event_wgt_xsecCORRECTION = 0.543;
+
     float event_wgt_SFs_btagging;
     ch->SetBranchAddress("event_wgt_SFs_btagging", &event_wgt_SFs_btagging);
 
     unsigned int njet;
     ch->SetBranchAddress("nak4jets_tight_pt25", &njet);
-    //std::cout << "3" << endl;
-
-    //std::cout << "4" << endl;
 
     float PFMET_pt_final;
     ch->SetBranchAddress("pTmiss", &PFMET_pt_final);
@@ -461,6 +479,30 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     std::vector<float> *lep_mass = 0;
     ch->SetBranchAddress("leptons_mass", &lep_mass);
+    
+    unsigned int nPVs;
+    ch->SetBranchAddress("nPVs", &nPVs);
+
+    unsigned int nPVs_good;
+    ch->SetBranchAddress("nPVs_good", &nPVs_good);
+
+    unsigned int nelectrons_fakeable;
+    ch->SetBranchAddress("nelectrons_fakeable", &nelectrons_fakeable);
+
+    unsigned int nelectrons_loose;
+    ch->SetBranchAddress("nelectrons_loose", &nelectrons_loose);
+    
+    unsigned int nmuons_fakeable;
+    ch->SetBranchAddress("nmuons_fakeable", &nmuons_fakeable);
+
+    unsigned int nmuons_loose;
+    ch->SetBranchAddress("nmuons_loose", &nmuons_loose);
+
+    unsigned int nleptons_fakeable;
+    ch->SetBranchAddress("nleptons_fakeable", &nleptons_fakeable);
+
+    unsigned int nleptons_loose;
+    ch->SetBranchAddress("nleptons_loose", &nleptons_loose);
 
     //TODO: calculate masses with b's, for L,M,T categories.
     float min_mbb_WPL;
@@ -474,26 +516,14 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     // Declare variables outside of the event loop
     Long64_t nEventsTotal = 0;
 
-    //// JCFeb22 add accumulators
-    //double sum_wgts_pre = 0;
-    //double sum_wgts_total_pre = 0;
-    //double sum_wgts = 0;
-    //double sum_wgts_total = 0;
-    
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event) {
       ch->GetEntry(event);
       
-    
       // progress bar
       nEventsTotal++;
       bar.progress(nEventsTotal, nEventsChain);
 
-      //// JCFeb22 add accumulators
-      //sum_wgts_pre += event_wgt;
-      //sum_wgts_total_pre += event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging;
-
-    
       // Calculate variables needed for filling histograms
       std::vector<unsigned int> nbjet_ct;
       nbjet_ct.push_back(0);
@@ -525,7 +555,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
             if (is_btagged >= 3) nbjet_ct.at(2)++; // tight
         }
       }
-      //std::cout << "5" << endl;
       TLorentzVector lep1;
       lep1.SetPtEtaPhiM(lep_pt->at(0), lep_eta->at(0), lep_phi->at(0), lep_mass->at(0));
       TLorentzVector lep2;
@@ -536,9 +565,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       if (sample_str.find("Data") != std::string::npos) event_wgt_SFs_btagging = 1.;
     
       // Fill histograms
-      //std::cout << "Filling histograms" << endl;
       for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
-        //std::cout << "Filling histograms: " << i_bjet << endl;
 
         // there are 3 WPs and 5 NB categories, so no need to loop twice. i_bjet = loose, med, tight
         if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
@@ -567,12 +594,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
         if (PFMET_pt_final > 50.) {
 
-          //// JCFeb22 add accumulators
-          //sum_wgts += event_wgt;
-          //sum_wgts_total += event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging;
-          //continue;
-
           h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          
+          // lepton hists
           h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
@@ -585,21 +609,33 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
           h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+
+          // Primary vertex hists 
+            h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          
+          // fakeable and loose lepton hists
+          // nleptons_fakeable, nleptons_loose 
+            h_nleptons_fakeable.at(i_bjet)->Fill(nleptons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nleptons_loose.at(i_bjet)->Fill(nleptons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+
+          // nelectrons_fakeable, nelectrons_loose 
+            h_nelectrons_fakeable.at(i_bjet)->Fill(nelectrons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nelectrons_loose.at(i_bjet)->Fill(nelectrons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+
+          // nmuons_fakeable, nmuons_loose 
+            h_nmuons_fakeable.at(i_bjet)->Fill(nmuons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nmuons_loose.at(i_bjet)->Fill(nmuons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+
         }
         h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
         h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
       }
     }
 
-    //// JCFeb22 add accumulators
-    //std::cout << "Sum of weights(event_wgt) pre: "<< sum_wgts_pre << endl;
-    //std::cout << "Sum of weights(event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging) pre: "<< sum_wgts_total_pre << endl;
-    //std::cout << "Sum of weights(event_wgt) post: "<< sum_wgts << endl;
-    //std::cout << "Sum of weights(event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging) post: "<< sum_wgts_total << endl;
-    //return 0;
 
-    //std::cout << "rebinning histograms" << endl;
-    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
+    // make a vector of vectors of histograms for all the histograms
+    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
     
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
@@ -612,6 +648,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     bar.finish();
 
     // save histograms as png, pdf, and root files
+    // for all histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose}
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
     plotVariable(h_jetpt, sample_str, plotDir);
@@ -628,13 +665,19 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     plotVariable(h_m_ll, sample_str, plotDir);
     plotVariable(h_m_lb, sample_str, plotDir);
     plotVariable(h_m_bb, sample_str, plotDir);
+    plotVariable(h_nPVs, sample_str, plotDir);
+    plotVariable(h_nPVs_good, sample_str, plotDir);
+    plotVariable(h_nleptons_fakeable, sample_str, plotDir);
+    plotVariable(h_nleptons_loose, sample_str, plotDir);
+    plotVariable(h_nelectrons_fakeable, sample_str, plotDir);
+    plotVariable(h_nelectrons_loose, sample_str, plotDir);
+    plotVariable(h_nmuons_fakeable, sample_str, plotDir);
+    plotVariable(h_nmuons_loose, sample_str, plotDir);
 
-    //std::cout << "20" << endl;
     // save histograms to root file
     string outfile_name = rootDir + "/hists_";
     outfile_name += sample_str;
     outfile_name += ".root";
-//    std::cout << "21" << endl;
 
     TFile* f = new TFile(outfile_name.data(), "RECREATE");
 
@@ -654,11 +697,15 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
    WRITE_HISTOGRAM(h_pt_ll)\
    WRITE_HISTOGRAM(h_m_ll)\
    WRITE_HISTOGRAM(h_m_lb)\
-   WRITE_HISTOGRAM(h_m_bb)
-
-//#define WRITE_HISTOGRAM(name) for (auto& h: name) std::cout << "will write " << h->GetName() << std::endl;
-//WRITE_HISTOGRAMS
-//#undef WRITE_HISTOGRAM 
+   WRITE_HISTOGRAM(h_m_bb)\
+   WRITE_HISTOGRAM(h_nPVs)\
+   WRITE_HISTOGRAM(h_nPVs_good)\
+   WRITE_HISTOGRAM(h_nleptons_fakeable)\
+   WRITE_HISTOGRAM(h_nleptons_loose)\
+   WRITE_HISTOGRAM(h_nelectrons_fakeable)\
+   WRITE_HISTOGRAM(h_nelectrons_loose)\
+   WRITE_HISTOGRAM(h_nmuons_fakeable)\
+   WRITE_HISTOGRAM(h_nmuons_loose)
 
 #define WRITE_HISTOGRAM(name) for (auto& h: name) {f->WriteTObject(h); delete h;}
 WRITE_HISTOGRAMS
@@ -666,9 +713,6 @@ WRITE_HISTOGRAMS
 #undef WRITE_HISTOGRAMS
 
     f->Close();
-
-    
-
 
     return 0;
 }
@@ -719,9 +763,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // save the stacked histograms to a root file
 
     // get the histogram name in latex format
-    //std::cout << "get hist name: ";
     string hname_latex = getHistogramName(hname);
-    //std::cout << hname_latex << endl;
 
     // separate data and Others
     TH1D* h_data = NULL;
@@ -732,11 +774,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
         TFile* f = new TFile(rootFiles[i].data());
-        //std::cout << "file " << f->GetName() << endl;
-        //std::cout << "get " << hname << endl;
         TH1D* h = (TH1D*)f->Get(hname.data());
-        //if (h) std::cout << "got " << hname << endl;
-        //else std::cout << "failed " << hname << endl;
     
 
         // create a vector of legend entries from the root file names
@@ -775,22 +813,18 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         }
 
     
-        //std::cout << "adding hist to hists " << hname << endl;
         hists.push_back(h);
         legend_entries.push_back(entry);
-        //std::cout << "added hist to hists " << hname << endl;
     }
 
     // sort the hists by integral
     // smallest integral on top
     // keep track of the indices of the sorted histograms
     // by using a vector of pairs
-    //std::cout << "creating hist pairs" << endl;
     vector<pair<int, TH1D*> > hists_sorted;
     for(int i = 0; i < hists.size(); i++){
         hists_sorted.emplace_back(i, hists[i]);
     }
-    //std::cout << "created hist pairs" << endl;
     sort(hists_sorted.begin(), hists_sorted.end(), compareHists);
 
     // create a vector of colors hopefully larger than the number of histograms
@@ -803,17 +837,13 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     colors.push_back(kCyan);
 
     // stack the histograms and make a plot
-    //std::cout << "create canvas" << endl;
     TCanvas *c = new TCanvas(hname.data(),"", 1000,800);
     c->cd();
     THStack *hs = new THStack(hname.data(),"");
     TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
-    //std::cout << "creates canvas and stack" << endl;
 
     // add the Others histogram first
     if (h_Others) { 
-        //std::cout << "stack Others hist" << endl;
-        //std::cout << "size of hists " << hists_sorted.size() << endl;
         
         h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
         h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
@@ -827,14 +857,12 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
         // set line color slightly lighter than fill color
-        //std::cout << "stack hist" << hists_sorted[i].second->GetName() << endl;
         hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
         hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
         hists_sorted[i].second->SetLineWidth(1);
         hists_sorted[i].second->SetFillStyle(3001);
         hists_sorted[i].second->GetXaxis()->SetTitle("");
         hs->Add(hists_sorted[i].second);
-        //std::cout << "stacked hist" << hists_sorted[i].second->GetName() << endl;
     }
 
 
