@@ -36,8 +36,8 @@ using namespace PlottingHelpers;
 #define H1(name,nbins,low,high) TH1D *h_##name = new TH1D(#name,#name,nbins,low,high);
 #define H1vec(name,nbins,low,high) \
   std::vector<TH1D *> h_##name ; \
-  for (unsigned int i=0; i<3; i++){ \
-    /* name the categories lt2 eq2 gt2 */ \
+  for (unsigned int i=0; i<5; i++){ \
+    /* name the categories lt2 eq2 gt2 eq1 eq0 */ \
     std::string catname = #name; \
     if (catname == "jetpt") { if (i>0) break;} \
     else if (catname == "nbjet" || catname == "bjetpt") { \
@@ -48,6 +48,8 @@ using namespace PlottingHelpers;
       if (i==0) catname += "_nb_lt2"; \
       else if (i==1) catname += "_nb_eq2"; \
       else if (i==2) catname += "_nb_gt2"; \
+      else if (i==3) catname += "_nb_eq1"; \
+      else if (i==4) catname += "_nb_eq0"; \
     }\
     h_##name.push_back(new TH1D(catname.c_str(),catname.c_str(),nbins,low,high)); \
   }
@@ -350,6 +352,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
      * met
      * Ht for all jets, bjets, and non-bjets
     */
+    
+    const int NUM_NB_CATEGORIES = 5;
+    const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
 
     //std::cout << "Making histograms" << std::endl;
     int const njet_nbin = 7;
@@ -409,8 +414,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     float event_wgt_triggers_dilepton_matched;
     ch->SetBranchAddress("event_wgt_triggers_dilepton_matched", &event_wgt_triggers_dilepton_matched);
 
-    float event_wgt_TTxsec = 1.;
-    if (sample_str.find("TT_") != std::string::npos) event_wgt_TTxsec = 0.826;
+    float event_wgt_xsecCORRECTION = 1.;
+    //if (sample_str.find("TT_") != std::string::npos) event_wgt_xsecCORRECTION = 0.826;
+    // tW xsec was using the wrong BR. needs the BR for "NoFullyHadronicDecays"
+    if (sample_str.find("ST_") != std::string::npos) event_wgt_xsecCORRECTION = 0.543;
     float event_wgt_SFs_btagging;
     ch->SetBranchAddress("event_wgt_SFs_btagging", &event_wgt_SFs_btagging);
 
@@ -453,14 +460,26 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     // Event loop
     // Declare variables outside of the event loop
     Long64_t nEventsTotal = 0;
+
+    //// JCFeb22 add accumulators
+    //double sum_wgts_pre = 0;
+    //double sum_wgts_total_pre = 0;
+    //double sum_wgts = 0;
+    //double sum_wgts_total = 0;
     
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event) {
       ch->GetEntry(event);
+      
     
       // progress bar
       nEventsTotal++;
       bar.progress(nEventsTotal, nEventsChain);
+
+      //// JCFeb22 add accumulators
+      //sum_wgts_pre += event_wgt;
+      //sum_wgts_total_pre += event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging;
+
     
       // Calculate variables needed for filling histograms
       std::vector<unsigned int> nbjet_ct;
@@ -475,7 +494,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         auto is_btagged = jet_is_btagged->at(i);
         auto const& pt = jet_pt->at(i);
         // TODO: add thresholds and WPs as arguments instead
-        constexpr float pt_threshold_btagged = 40.;
+        constexpr float pt_threshold_btagged = 25.;
         constexpr float pt_threshold_unbtagged = 25.;
         float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (is_btagged && pt < pt_threshold) is_btagged = 0;
@@ -485,12 +504,12 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
             
             if (PFMET_pt_final < 50.) continue;
 
-            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
             if (is_btagged == 0) njet_ct++;
-            if (is_btagged >= 1) nbjet_ct.at(0)++;
-            if (is_btagged >= 2) nbjet_ct.at(1)++;
-            if (is_btagged >= 3) nbjet_ct.at(2)++;
+            if (is_btagged >= 1) nbjet_ct.at(0)++; // loose
+            if (is_btagged >= 2) nbjet_ct.at(1)++; // medium
+            if (is_btagged >= 3) nbjet_ct.at(2)++; // tight
         }
       }
       //std::cout << "5" << endl;
@@ -505,39 +524,66 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     
       // Fill histograms
       //std::cout << "Filling histograms" << endl;
-      for (unsigned int i_bjet = 0; i_bjet < 3; i_bjet++){
+      for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
         //std::cout << "Filling histograms: " << i_bjet << endl;
 
-        // coincidentally there are 3 WPs and 3 categories, so no need to loop twice. i_bjet = loose, med, tight
-        if (PFMET_pt_final > 50.) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+        // there are 3 WPs and 5 NB categories, so no need to loop twice. i_bjet = loose, med, tight
+        if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
 
-        // lt2 eq2 gt2 categories
-        // TODO: fix LMT working points
-        // currently loose
-        if ((i_bjet == 0) && (nbjet_ct.at(0) >= 2)) continue;
-        if ((i_bjet == 1) && (nbjet_ct.at(0) != 2)) continue;
-        if ((i_bjet == 2) && (nbjet_ct.at(0) <= 2)) continue;
+        // NB Categories: lt2 eq2 gt2 eq1 eq0
+        switch (i_bjet) {
+            case 0: // lt2
+                if (nbjet_ct.at(BTAG_WP) >= 2) continue;
+                break;
+            case 1: // eq2
+                if (nbjet_ct.at(BTAG_WP) != 2) continue;
+                break;
+            case 2: // gt2
+                if (nbjet_ct.at(BTAG_WP) <= 2) continue;
+                break;
+            case 3: // eq1
+                if (nbjet_ct.at(BTAG_WP) != 1) continue;
+                break;
+            case 4: // eq0
+                if (nbjet_ct.at(BTAG_WP) != 0) continue;
+                break;
+            default:
+                break;
+        }
+
 
         if (PFMET_pt_final > 50.) {
-          h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+
+          //// JCFeb22 add accumulators
+          //sum_wgts += event_wgt;
+          //sum_wgts_total += event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging;
+          //continue;
+
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
       
           // dilepton hists
-          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
           //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
         }
-        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
-        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_TTxsec);
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
       }
     }
+
+    //// JCFeb22 add accumulators
+    //std::cout << "Sum of weights(event_wgt) pre: "<< sum_wgts_pre << endl;
+    //std::cout << "Sum of weights(event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging) pre: "<< sum_wgts_total_pre << endl;
+    //std::cout << "Sum of weights(event_wgt) post: "<< sum_wgts << endl;
+    //std::cout << "Sum of weights(event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging) post: "<< sum_wgts_total << endl;
+    //return 0;
 
     //std::cout << "rebinning histograms" << endl;
     std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi};
@@ -607,6 +653,10 @@ WRITE_HISTOGRAMS
 #undef WRITE_HISTOGRAMS
 
     f->Close();
+
+    
+
+
     return 0;
 }
 

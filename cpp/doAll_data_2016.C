@@ -1,5 +1,5 @@
 {
-    gROOT->ProcessLine(".L analyze_bjets.C+");
+    gROOT->ProcessLine(".L analyze_bjets_C.so");
     std::string FILEDIR = "/ceph/cms/store/group/tttt/Worker/usarica/output/Analysis_TTJetRadiation/2023_01_13_tt_bkg_Data";
 
 

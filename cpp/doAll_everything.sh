@@ -15,6 +15,8 @@ mkdir -p logs/
 mkdir -p outputs/ outputs/data outputs/mc outputs/plots
 
 # create the log files so that 'tail -f logs/*' works  
+touch logs/compile_scripts.log
+
 touch logs/doAll_data_NonAPV_2016.log
 touch logs/doAll_data_APV_2016.log
 touch logs/doAll_data_2017.log
@@ -29,6 +31,14 @@ touch logs/stack_2016_NonAPV.log
 touch logs/stack_2016_APV.log
 touch logs/stack_2017.log
 touch logs/stack_2018.log
+
+
+# Compile the macro
+#rqlb compile_scripts.C > logs/compile_scripts.log 2>&1 
+rm analyze_bjets_C.so
+rm directory_tools_C.so
+root -l -b -q -e .L analyze_bjets.C+ > logs/compile_scripts.log 2>&1 
+root -l -b -q -e .L directory_tools.C+ > logs/compile_scripts.log 2>&1 
 
 # Make Histograms: Data
 rqlb doAll_data_NonAPV_2016.C > logs/doAll_data_NonAPV_2016.log 2>&1 &
