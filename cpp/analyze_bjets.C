@@ -74,11 +74,21 @@ string getHistogramName(string hname){
     if(hname.find("njet") != string::npos){
         hname_latex = "n_{jet}";
     }  
-    else if(hname == "bjetpt"){
+    else if(hname.find("nbjet") != string::npos){
+        hname_latex = "n_{b}";
+        hname_latex += " (";
+        hname_latex += hname.substr(6);
+        hname_latex += ")";
+    }  
+    else if(hname.find("bjetpt") != string::npos){
         hname_latex = "p_{T}^{b}";
+        hname_latex += " (";
+        hname_latex += hname.substr(7);
+        hname_latex += ") [GeV]";
     }  
     else if(hname == "jetpt"){
         hname_latex = "p_{T}^{j}";
+        hname_latex += " [GeV]";
     }  
     else if(hname == "nbjet"){
         hname_latex = "n_{b}";
@@ -117,6 +127,9 @@ string getHistogramName(string hname){
     }
     else if(hname.find("m_lb") != string::npos){
         hname_latex = "m_{lb} [GeV]";
+    }
+    else if(hname.find("pt_ll") != string::npos){
+        hname_latex = "p_{T}^{ll} [GeV]";
     }
     else if(hname.find("m_ll") != string::npos){
         hname_latex = "m_{ll} [GeV]";
