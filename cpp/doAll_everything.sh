@@ -6,8 +6,11 @@ cd ~/tttt/CMSSW_10_6_26/src/tttt; cmsenv; eval $(./setup.sh env); cd -
 
 # specify file directory for the input root files
 current_date=$(date +%Y_%m_%d)
-export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230225_tt_bkg_MVA"
-export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked"
+
+export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230223_tt_bkg_Cutbased"
+export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased"
+#export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230225_tt_bkg_MVA"
+#export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_MVA"
 
 # back up the logs/ and output/ directories if they exist
 if [ -d logs/ ] && [ -d outputs/ ]; then
@@ -21,7 +24,7 @@ fi
 
 # create the logs/ and outputs/ directories if they don't exist
 mkdir -p logs/
-mkdir -p outputs/ outputs/data outputs/mc outputs/plots
+mkdir -p outputs/ outputs/code outputs/data outputs/mc outputs/plots
 
 # create the log files so that 'tail -f logs/*' works  
 touch logs/compile_scripts.log
@@ -51,6 +54,11 @@ echo "Setup took $elapsed_time seconds."
 echo "Compiling scripts..."
 rm analyze_bjets_C.so
 rm directory_tools_C.so
+cp analyze_bjets.C outputs/code/.
+cp directory_tools.C outputs/code/.
+cp doAll_*_20*.C outputs/code/.
+cp stack_20*.C outputs/code/.
+cp doAll_everything.sh outputs/code/.
 root -l -b -q -e .L analyze_bjets.C+ > logs/compile_scripts.log 2>&1 
 root -l -b -q -e .L directory_tools.C+ >> logs/compile_scripts.log 2>&1 
 
