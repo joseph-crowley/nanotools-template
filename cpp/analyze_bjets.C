@@ -450,7 +450,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     float event_wgt_xsecCORRECTION = 1.;
     //if (sample_str.find("TT_") != std::string::npos) event_wgt_xsecCORRECTION = 0.826;
     // tW xsec was using the wrong BR. needs the BR for "NoFullyHadronicDecays"
-    if (sample_str.find("ST_") != std::string::npos) event_wgt_xsecCORRECTION = 0.543;
+    //if (sample_str.find("ST_") != std::string::npos) event_wgt_xsecCORRECTION = 0.543;
 
     float event_wgt_SFs_btagging;
     ch->SetBranchAddress("event_wgt_SFs_btagging", &event_wgt_SFs_btagging);

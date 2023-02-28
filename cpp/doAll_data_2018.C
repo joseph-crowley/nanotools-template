@@ -1,6 +1,8 @@
 {
     gROOT->ProcessLine(".L analyze_bjets_C.so");
-    std::string FILEDIR = "/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230223_tt_bkg_Cutbased";
+    const char* env_FILEDIR = std::getenv("FILEDIR");
+    std::string FILEDIR = env_FILEDIR != nullptr ? env_FILEDIR : "SPECIFY/FILEDIR/AS/ENV/VARIABLE";
+    std::cout << "getting files from " << FILEDIR << endl;
 
 
     // Category Data_2018

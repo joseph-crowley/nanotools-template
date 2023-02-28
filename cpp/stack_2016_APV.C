@@ -1,7 +1,9 @@
 {
 // set up output
  gROOT->ProcessLine(".L directory_tools_C.so");
- std::string dirName = "/home/users/crowley/public_html/tttt/2023_02_24_analyze_bjets_stacked_2016_APV";
+ const char* env_PLOTDIR = std::getenv("PLOTDIR");
+ std::string PLOTDIR = env_PLOTDIR != nullptr ? env_PLOTDIR : "SPECIFY/PLOTDIR/AS/ENV/VARIABLE";
+ std::string dirName = PLOTDIR + "_2016_APV";
  directory_tools(dirName);
  std::cout << "Output directory: " << dirName << endl;
 
