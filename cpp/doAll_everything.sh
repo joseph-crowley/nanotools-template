@@ -7,10 +7,10 @@ cd ~/tttt/CMSSW_10_6_26/src/tttt; cmsenv; eval $(./setup.sh env); cd -
 # specify file directory for the input root files
 current_date=$(date +%Y_%m_%d)
 
-export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230223_tt_bkg_Cutbased"
-export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased"
-#export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230225_tt_bkg_MVA"
-#export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_MVA"
+#export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230223_tt_bkg_Cutbased"
+#export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased"
+export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230225_tt_bkg_MVA"
+export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_MVA"
 
 # back up the logs/ and output/ directories if they exist
 if [ -d logs/ ] && [ -d outputs/ ]; then
@@ -40,9 +40,9 @@ PLOTDIR=$PLOTDIR
 This script compiles and runs analysis scripts, and then plots histograms. The logs/ directory contains log files for the different steps of the analysis.
 
 Compilation log: logs/compile_scripts.log
-Data histogramming logs: logs/doAll_data_2018.log
-MC histogramming logs: logs/doAll_mc_2018.log
-Histogram plotting logs: logs/stack_2018.log
+Data histogramming logs: logs/doAll_data_*.log
+MC histogramming logs: logs/doAll_mc_*.log
+Histogram plotting logs: logs/stack_*.log
 EOF
 
 # create the log files so that 'tail -f logs/*' works  
