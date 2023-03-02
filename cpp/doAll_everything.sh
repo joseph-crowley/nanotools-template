@@ -23,8 +23,27 @@ if [ -d logs/ ] && [ -d outputs/ ]; then
 fi
 
 # create the logs/ and outputs/ directories if they don't exist
-mkdir -p logs/
+mkdir -p logs/ 
 mkdir -p outputs/ outputs/code outputs/data outputs/mc outputs/plots
+
+# create a README for the run
+cat > logs/README << EOF
+This log directory contains logs for the tttt analysis.
+
+Run date: $(date +%Y-%m-%d)
+Run time: $(date +%H:%M:%S)
+
+Environment variables:
+FILEDIR=$FILEDIR
+PLOTDIR=$PLOTDIR
+
+This script compiles and runs analysis scripts, and then plots histograms. The logs/ directory contains log files for the different steps of the analysis.
+
+Compilation log: logs/compile_scripts.log
+Data histogramming logs: logs/doAll_data_2018.log
+MC histogramming logs: logs/doAll_mc_2018.log
+Histogram plotting logs: logs/stack_2018.log
+EOF
 
 # create the log files so that 'tail -f logs/*' works  
 touch logs/compile_scripts.log
@@ -54,6 +73,8 @@ echo "Setup took $elapsed_time seconds."
 echo "Compiling scripts..."
 rm analyze_bjets_C.so
 rm directory_tools_C.so
+
+# keep a copy of the code with the output
 cp analyze_bjets.C outputs/code/.
 cp directory_tools.C outputs/code/.
 cp doAll_*_20*.C outputs/code/.

@@ -17,6 +17,7 @@
 #include "TLatex.h"
 #include "TLorentzVector.h"
 
+#include "lepton_sfs_el.h"
 //#include "../NanoCORE/Nano.h"
 //#include "../NanoCORE/Base.h"
 //#include "../NanoCORE/SSSelections.cc"
@@ -65,6 +66,13 @@ struct debugger { template<typename T> debugger& operator , (const T& v) { cerr<
 
 using namespace std;
 //using namespace tas;
+
+bool isLinearScale(string hname){
+    
+    if (hname.find("PVs") != string::npos) return true;
+
+    return false;
+}
 
 string getHistogramName(string hname){
     // get the sample name from the root file name
@@ -161,7 +169,7 @@ void plotVariable(std::vector<TH1D*> const& h_vars, string sample_str, string pl
       //h_var->GetXaxis()->SetTitle(h_var->GetName());
       //h_var->GetYaxis()->SetTitle("Events");
       h_var->Draw();
-      varPlot->SetLogy();
+      if (!isLinearScale(h_var->GetName())) varPlot->SetLogy();
   
       string varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
@@ -190,17 +198,26 @@ double getStackIntegral(THStack* stack)
 
 
 void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
+
+
+  // get the integral of the stack
+  double stack_integral = getStackIntegral(hs);
+  std::cout << "stack integral" << " for " << hname << ": " << stack_integral << std::endl;
+  
+  
+
   // create a canvas to draw the plot on
   TString canvasname = hname + "_ratio";
   PlottingHelpers::PlotCanvas plot(canvasname, 512, 512, 1, 2, 0.25, 0.08, 0.2, 0.0875, 0., 0.1, 0.3);
   plot.addCMSLogo(kPreliminary, 13, 0, 0);
 
   float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
-  float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
+  //float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
+  float PLOT_MIN = std::max(0.1, 0.75 * std::min(hs->GetMinimum(), h_data->GetMinimum()));
 
   // draw the histogram stack in the top pad
   plot.getInsidePanels()[0][1]->cd();
-  plot.getInsidePanels()[0][1]->SetLogy();
+  if (!isLinearScale(hname)) plot.getInsidePanels()[0][1]->SetLogy();
   hs->SetMaximum(PLOT_MAX);
   hs->SetMinimum(PLOT_MIN);
   hs->Draw("hist");
@@ -361,6 +378,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     
     const int NUM_NB_CATEGORIES = 5;
     const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
+    constexpr float pt_threshold_btagged = 25.;
+    constexpr float pt_threshold_unbtagged = 25.;
 
     int const njet_nbin = 7;
     H1vec(njet,njet_nbin,0,njet_nbin);
@@ -479,6 +498,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
     std::vector<float> *lep_mass = 0;
     ch->SetBranchAddress("leptons_mass", &lep_mass);
+
+    // leptons_pdgId
+    std::vector<int> *lep_pdgId = 0;
+    ch->SetBranchAddress("leptons_pdgId", &lep_pdgId);
     
     int nPVs;
     ch->SetBranchAddress("nPVs", &nPVs);
@@ -524,6 +547,27 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       nEventsTotal++;
       bar.progress(nEventsTotal, nEventsChain);
 
+      // TODO: remove this from the processing
+      if (sample_str.find("Data") != std::string::npos) event_wgt_SFs_btagging = 1.;
+
+      // Calculate lepton scale factors using the lepton SF headers lepton_sfs_el.h 
+      // electronScaleFactor_RunABCD(float pt, float eta)
+      // electronScaleFactorReco_RunABCD(float pt, float eta) 
+
+      // do the calculation for the event by taking the product of the SFs for each lepton
+      double event_wgt_SFs_leptons = 1.;
+      if (sample_str.find("Data") == std::string::npos) {
+          for (unsigned int i = 0; i < lep_pt->size(); i++) {
+            if (std::abs(lep_pdgId->at(i)) == 11) {
+              event_wgt_SFs_leptons *= electronScaleFactor_RunABCD(lep_pt->at(i), lep_eta->at(i));
+              event_wgt_SFs_leptons *= electronScaleFactorReco_RunABCD(lep_pt->at(i), lep_eta->at(i));
+            }
+            //if (lep_pdgId->at(i) == 13) {
+            //  event_wgt_SFs_leptons *= muonScaleFactor_RunABCD(lep_pt->at(i), lep_eta->at(i));
+            //}
+          }
+      }
+
       // Calculate variables needed for filling histograms
       std::vector<unsigned int> nbjet_ct;
       nbjet_ct.push_back(0);
@@ -536,9 +580,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
         // defined by int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight)
         auto is_btagged = jet_is_btagged->at(i);
         auto const& pt = jet_pt->at(i);
-        // TODO: add thresholds and WPs as arguments instead
-        constexpr float pt_threshold_btagged = 25.;
-        constexpr float pt_threshold_unbtagged = 25.;
         float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (is_btagged && pt < pt_threshold) is_btagged = 0;
         pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
@@ -547,8 +588,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
             
             if (PFMET_pt_final < 50.) continue;
 
-            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
             if (is_btagged == 0) njet_ct++;
             if (is_btagged >= 1) nbjet_ct.at(0)++; // loose
             if (is_btagged >= 2) nbjet_ct.at(1)++; // medium
@@ -561,14 +602,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
       lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
       TLorentzVector dilep = lep1 + lep2;
 
-      // TODO: remove this from the processing
-      if (sample_str.find("Data") != std::string::npos) event_wgt_SFs_btagging = 1.;
-    
       // Fill histograms
       for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
 
         // there are 3 WPs and 5 NB categories, so no need to loop twice. i_bjet = loose, med, tight
-        if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        if (PFMET_pt_final > 50. && i_bjet < 3) h_nbjet.at(i_bjet)->Fill(nbjet_ct.at(i_bjet), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
         // NB Categories: lt2 eq2 gt2 eq1 eq0
         switch (i_bjet) {
@@ -594,42 +632,42 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
 
         if (PFMET_pt_final > 50.) {
 
-          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           
           // lepton hists
-          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+          h_lep1_pt.at(i_bjet)->Fill(lep_pt->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep1_eta.at(i_bjet)->Fill(lep_eta->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep1_phi.at(i_bjet)->Fill(lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
       
           // dilepton hists
-          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
 
           // Primary vertex hists 
-            h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           
           // fakeable and loose lepton hists
           // nleptons_fakeable, nleptons_loose 
-            h_nleptons_fakeable.at(i_bjet)->Fill(nleptons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nleptons_loose.at(i_bjet)->Fill(nleptons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nleptons_fakeable.at(i_bjet)->Fill(nleptons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            h_nleptons_loose.at(i_bjet)->Fill(nleptons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
           // nelectrons_fakeable, nelectrons_loose 
-            h_nelectrons_fakeable.at(i_bjet)->Fill(nelectrons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nelectrons_loose.at(i_bjet)->Fill(nelectrons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nelectrons_fakeable.at(i_bjet)->Fill(nelectrons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            h_nelectrons_loose.at(i_bjet)->Fill(nelectrons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
           // nmuons_fakeable, nmuons_loose 
-            h_nmuons_fakeable.at(i_bjet)->Fill(nmuons_fakeable, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-            h_nmuons_loose.at(i_bjet)->Fill(nmuons_loose, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+            h_nmuons_fakeable.at(i_bjet)->Fill(nmuons_fakeable, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            h_nmuons_loose.at(i_bjet)->Fill(nmuons_loose, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
         }
-        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
-        h_Ht.at(i_bjet)->Fill(Ht, event_wgt_noPU * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION);
+        h_met.at(i_bjet)->Fill(PFMET_pt_final, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+        h_Ht.at(i_bjet)->Fill(Ht, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
       }
     }
 
@@ -892,7 +930,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     h_data->Draw("e1psame");
 
     leg->Draw();
-    c->SetLogy();
+    if (!isLinearScale(hname)) c->SetLogy();
 
 
 
@@ -932,3 +970,5 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     colors.clear();
     return 0;
 }
+
+void analyze_bjets() { return; }
