@@ -45,14 +45,12 @@ using namespace PlottingHelpers;
       if (i==0) catname += "_loose"; \
       else if (i==1) catname += "_medium"; \
       else if (i==2) catname += "_tight";} \
-      if (i>2) continue;\
     else {\
       if (i==0) catname += "_nb_lt2"; \
       else if (i==1) catname += "_nb_eq2"; \
       else if (i==2) catname += "_nb_gt2"; \
       else if (i==3) catname += "_nb_eq1"; \
       else if (i==4) catname += "_nb_eq0"; \
-      if (i>4) continue;\
     }\
     h_##name.push_back(new TH1D(catname.c_str(),catname.c_str(),nbins,low,high)); \
   }
@@ -199,7 +197,7 @@ double getStackIntegral(THStack* stack)
 }
 
 
-void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
+void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
 
 
   // get the integral of the stack
@@ -245,8 +243,6 @@ void makeRatioPlot(THStack* hs, TH1D* h_Others, TH1D* h_data, string hname, stri
   for(int i = hists_sorted.size() - 1; i >= 0; i--){
       leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
   }
-  // then Others
-  leg->AddEntry(h_Others, "Others", "f");
   leg->Draw();
 
   //legend->SetBorderSize(0);
@@ -847,11 +843,9 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     // get the histogram name in latex format
     string hname_latex = getHistogramName(hname);
 
-    // separate data and Others
+    // separate data 
     TH1D* h_data = NULL;
     string entry_data;
-    TH1D* h_Others = NULL;
-    string entry_Others;
     vector<TH1D*> hists;
     vector<string> legend_entries;
     for(int i = 0; i < rootFiles.size(); i++){
@@ -869,15 +863,6 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
             entry.erase(entry.find_last_of("."), entry.size());
             h_data = h;
             entry_data = entry;
-            continue;
-        }
-        // for Others
-        if (rootFiles[i].find("Others") != string::npos){
-            string entry = rootFiles[i];
-            entry.erase(0, entry.find_last_of("/")+1);
-            entry.erase(entry.find_last_of("."), entry.size());
-            h_Others = h;
-            entry_Others = entry;
             continue;
         }
 
@@ -924,17 +909,6 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     THStack *hs = new THStack(hname.data(),"");
     TLegend *leg = new TLegend(0.7,0.7,0.9,0.9);
 
-    // add the Others histogram first
-    if (h_Others) { 
-        
-        h_Others->SetFillColor(colors[hists_sorted.size()%colors.size()]);
-        h_Others->SetLineColor(colors[hists_sorted.size()%colors.size()]+2);
-        h_Others->SetLineWidth(1);
-        h_Others->SetFillStyle(3001);
-        h_Others->GetXaxis()->SetTitle("");
-        hs->Add(h_Others);
-    }
-
     for(int i = 0; i < hists_sorted.size(); i++){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
@@ -962,8 +936,6 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     for(int i = hists_sorted.size() - 1; i >= 0; i--){
         leg->AddEntry(hists_sorted[i].second, legend_entries[hists_sorted[i].first].data(), "f");
     }
-    // then Others
-    leg->AddEntry(h_Others, "Others", "f");
 
 
     // draw the data histogram
@@ -998,7 +970,7 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     f->Write();
     f->Close();
 
-    makeRatioPlot(hs, h_Others, h_data, hname, plotDir, hists_sorted, legend_entries);
+    makeRatioPlot(hs, h_data, hname, plotDir, hists_sorted, legend_entries);
 
     // clean up memory
     delete c;
