@@ -129,6 +129,9 @@ string getHistogramName(string hname){
             hname_latex += "}";
         }
     }
+    else if(hname.find("dR_bb") != string::npos){
+        hname_latex = "dR_{bb}";
+    }
     else if(hname.find("m_bb") != string::npos){
         hname_latex = "m_{bb} [GeV]";
     }
@@ -204,6 +207,10 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir, std:
   double stack_integral = getStackIntegral(hs);
   std::cout << "stack integral" << " for " << hname << ": " << stack_integral << std::endl;
   
+  if (stack_integral == 0) {
+     std::cout << "stack integral is zero, skipping" << std::endl;
+     return;
+  }
   
 
   // create a canvas to draw the plot on
@@ -428,6 +435,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     H1vec(m_lb,m_lb_nbin,0,1000);
     H1vec(m_bb,m_bb_nbin,0,1000);
 
+    // delta R histograms
+    int const dR_bb_nbin = 40;
+    H1vec(dR_bb,dR_bb_nbin,0,5);
 
     // Primary vertex histograms
     int const nPV_nbin = 50;
@@ -483,6 +493,15 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
     std::vector<float> *jet_pt = 0;
     ch->SetBranchAddress("ak4jets_pt", &jet_pt);
+
+    std::vector<float> *jet_eta = 0;
+    ch->SetBranchAddress("ak4jets_eta", &jet_eta);
+
+    std::vector<float> *jet_phi = 0;
+    ch->SetBranchAddress("ak4jets_phi", &jet_phi);
+
+    std::vector<float> *jet_mass = 0;
+    ch->SetBranchAddress("ak4jets_mass", &jet_mass);
 
     std::vector<unsigned char> *jet_is_btagged = 0;
     ch->SetBranchAddress("ak4jets_pass_btagging", &jet_is_btagged);
@@ -656,6 +675,26 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
       lep2.SetPtEtaPhiM(lep_pt->at(1), lep_eta->at(1), lep_phi->at(1), lep_mass->at(1));
       TLorentzVector dilep = lep1 + lep2;
 
+      // calculate min_m_bb and dR_bb
+        float min_m_bb = 9999.;
+        float min_dR_bb = 9999.;
+        for (unsigned int i = 0; i < njet; i++) {
+            auto is_btagged = jet_is_btagged->at(i);
+            auto const& pt = jet_pt->at(i);
+            float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
+            if (is_btagged && pt < pt_threshold) is_btagged = 0;
+            pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
+            if (pt > pt_threshold) {
+                if (is_btagged == 0) continue;
+                TLorentzVector jet;
+                jet.SetPtEtaPhiM(jet_pt->at(i), jet_eta->at(i), jet_phi->at(i), jet_mass->at(i));
+                float dR_bb = dilep.DeltaR(jet);
+                if (dR_bb < min_dR_bb) min_dR_bb = dR_bb;
+                float m_bb = (dilep + jet).M();
+                if (m_bb < min_m_bb) min_m_bb = m_bb;
+            }
+        }
+
       // Fill histograms
       for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
 
@@ -700,7 +739,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
-          //h_m_bb.at(i_bjet)->Fill(min_mbb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging);
+          h_m_bb.at(i_bjet)->Fill(min_m_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_dR_bb.at(i_bjet)->Fill(min_dR_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
           // Primary vertex hists 
             h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
@@ -757,6 +797,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     plotVariable(h_m_ll, sample_str, plotDir);
     plotVariable(h_m_lb, sample_str, plotDir);
     plotVariable(h_m_bb, sample_str, plotDir);
+    plotVariable(h_dR_bb, sample_str, plotDir);
     plotVariable(h_nPVs, sample_str, plotDir);
     plotVariable(h_nPVs_good, sample_str, plotDir);
     plotVariable(h_nleptons_fakeable, sample_str, plotDir);
@@ -790,6 +831,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
    WRITE_HISTOGRAM(h_m_ll)\
    WRITE_HISTOGRAM(h_m_lb)\
    WRITE_HISTOGRAM(h_m_bb)\
+   WRITE_HISTOGRAM(h_dR_bb)\
    WRITE_HISTOGRAM(h_nPVs)\
    WRITE_HISTOGRAM(h_nPVs_good)\
    WRITE_HISTOGRAM(h_nleptons_fakeable)\
