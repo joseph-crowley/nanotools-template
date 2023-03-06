@@ -151,6 +151,12 @@ string getHistogramName(string hname){
     else if(hname.find("Ht") != string::npos){
         hname_latex = "H_{T} [GeV]";
     }
+    else if(hname.find("lep1_etaphi") != string::npos || hname.find("lep2_etaphi") != string::npos){
+        hname_latex = "#eta-#phi_{l}";
+        hname_latex += " (";
+        hname_latex += hname.substr(11);
+        hname_latex += ")";
+    }   
     else if(hname.find("lep1_pt") != string::npos || hname.find("lep2_pt") != string::npos ||
             hname.find("lep1_eta") != string::npos || hname.find("lep2_eta") != string::npos ||
             hname.find("lep1_phi") != string::npos || hname.find("lep2_phi") != string::npos){
@@ -181,10 +187,10 @@ string getHistogramName(string hname){
         hname_latex = "m_{bb}^{min} [GeV]";
     }
     else if(hname.find("m_lb") != string::npos){
-        hname_latex = "m_{lb} [GeV]";
+        hname_latex = "m_{l b} [GeV]";
     }
     else if(hname.find("pt_ll") != string::npos){
-        hname_latex = "p_{T}^{ll} [GeV]";
+        hname_latex = "p_{T}^{l l} [GeV]";
     }
     else if(hname.find("m_ll") != string::npos){
         hname_latex = "m_{ll} [GeV]";
@@ -503,6 +509,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     H1vec(lep1_eta,lep1_eta_nbin,-2.5,2.5);
     H1vec(lep1_phi,lep1_phi_nbin,-3.2,3.2);
 
+    int const lep1_etaphi_nbin = 50;
+    H2vec(lep1_etaphi,lep1_eta_nbin,-2.5,2.5,lep1_phi_nbin,-3.2,3.2);
+
     // subleading lepton histograms
     int const lep2_pt_nbin = 100;
     int const lep2_eta_nbin = 50;
@@ -510,6 +519,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     H1vec(lep2_pt,lep2_pt_nbin,0,1000);
     H1vec(lep2_eta,lep2_eta_nbin,-2.5,2.5);
     H1vec(lep2_phi,lep2_phi_nbin,-3.2,3.2);
+
+    int const lep2_etaphi_nbin = 50;
+    H2vec(lep2_etaphi,lep2_eta_nbin,-2.5,2.5,lep2_phi_nbin,-3.2,3.2);
     
     // dilepton histograms
     int const pt_ll_nbin = 100;
@@ -653,6 +665,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     // Event loop
     for (Long64_t event = 0; event < ch->GetEntries(); ++event) {
       ch->GetEntry(event);
+
+      // apply the lepton cuts pt > 25,20
+      if (lep_pt->at(0) < 25 || lep_pt->at(1) < 20) continue;
+
       
       // progress bar
       nEventsTotal++;
@@ -678,6 +694,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
             //}
           }
       }
+
 
       // Calculate variables needed for filling histograms
       std::vector<unsigned int> nbjet_ct;
@@ -843,6 +860,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
         if (PFMET_pt_final > 50.) {
 
+
           h_njet.at(i_bjet)->Fill(njet_ct, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           
           // lepton hists
@@ -852,6 +870,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+
+          // lepton 2D hists
+          h_lep1_etaphi.at(i_bjet)->Fill(lep_eta->at(0), lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_lep2_etaphi.at(i_bjet)->Fill(lep_eta->at(1), lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
       
           // dilepton hists
           h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
@@ -886,8 +908,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
     // make a vector of vectors of histograms for all the histograms
     std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_bjetphi, &h_bjeteta, &h_jetpt, &h_jetphi, &h_jeteta, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
-    std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi};
-    
+    std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi, &h_lep1_etaphi, &h_lep2_etaphi };   
+
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
           int nbin = histogram->GetNbinsX();
@@ -909,6 +931,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     // save histograms as png, pdf, and root files
     plotVariable2D(h_bjetetaphi, sample_str, plotDir);
     plotVariable2D(h_jetetaphi, sample_str, plotDir);
+    plotVariable2D(h_lep1_etaphi, sample_str, plotDir);
+    plotVariable2D(h_lep2_etaphi, sample_str, plotDir);
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
     plotVariable(h_bjetpt, sample_str, plotDir);
@@ -962,9 +986,11 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
    WRITE_HISTOGRAM(h_lep1_pt)\
    WRITE_HISTOGRAM(h_lep1_eta)\
    WRITE_HISTOGRAM(h_lep1_phi)\
+   WRITE_HISTOGRAM(h_lep1_etaphi)\
    WRITE_HISTOGRAM(h_lep2_pt)\
    WRITE_HISTOGRAM(h_lep2_eta)\
    WRITE_HISTOGRAM(h_lep2_phi)\
+   WRITE_HISTOGRAM(h_lep2_etaphi)\
    WRITE_HISTOGRAM(h_pt_ll)\
    WRITE_HISTOGRAM(h_m_ll)\
    WRITE_HISTOGRAM(h_m_lb)\

@@ -155,7 +155,17 @@
  PLOT_HIST2D("jetetaphi")\
  PLOT_HIST2D("bjetetaphi_loose")\
  PLOT_HIST2D("bjetetaphi_medium")\
- PLOT_HIST2D("bjetetaphi_tight")
+ PLOT_HIST2D("bjetetaphi_tight")\
+ PLOT_HIST2D("lep1_etaphi_nb_lt2")\
+ PLOT_HIST2D("lep1_etaphi_nb_eq0")\
+ PLOT_HIST2D("lep1_etaphi_nb_eq1")\
+ PLOT_HIST2D("lep1_etaphi_nb_eq2")\
+ PLOT_HIST2D("lep1_etaphi_nb_gt2")\
+ PLOT_HIST2D("lep2_etaphi_nb_lt2")\
+ PLOT_HIST2D("lep2_etaphi_nb_eq0")\
+ PLOT_HIST2D("lep2_etaphi_nb_eq1")\
+ PLOT_HIST2D("lep2_etaphi_nb_eq2")\
+ PLOT_HIST2D("lep2_etaphi_nb_gt2")
 
  vector<string> rootFiles_2018;
  rootFiles_2018.push_back("outputs/mc/hists_all_real_b.root");
