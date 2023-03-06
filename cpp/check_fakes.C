@@ -378,8 +378,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     */
     
     const int NUM_NB_CATEGORIES = 5;
-    const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
-    constexpr float pt_threshold_btagged = 25.;
+    const int BTAG_WP = 0; // 0 loose, 1 medium, 2 tight
+    constexpr float pt_threshold_btagged = 40.;
     constexpr float pt_threshold_unbtagged = 25.;
 
     int const njet_nbin = 7;
@@ -595,8 +595,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
             
             if (PFMET_pt_final < 50.) continue;
 
-            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
-            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
             if (is_btagged == 0) njet_ct++;
             if (is_btagged >= 1) nbjet_ct.at(0)++; // loose
             if (is_btagged >= 2) nbjet_ct.at(1)++; // medium
@@ -634,6 +632,24 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
         default:
           if (!isData) continue;
           break;
+      }
+
+      for (unsigned int i = 0; i < njet; i++) {
+        // is_btagged is an unsigned char 
+        // defined by int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight)
+        auto is_btagged = jet_is_btagged->at(i);
+        auto const& pt = jet_pt->at(i);
+        float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
+        if (is_btagged && pt < pt_threshold) is_btagged = 0;
+        pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
+        if (pt > pt_threshold) {
+            Ht += pt;
+            
+            if (PFMET_pt_final < 50.) continue;
+
+            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+        }
       }
 
       TLorentzVector lep1;
@@ -832,6 +848,7 @@ bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
     double h2_error_norm = h2_error/binwidth;
 
     // compare the bin contents and errors to see if h1 < h2
+    //if (h1_integral_norm == h2_integral_norm) return true;
     return (h1_integral_norm < h2_integral_norm);
 }
 
