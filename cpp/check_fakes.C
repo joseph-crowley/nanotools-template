@@ -151,10 +151,22 @@ string getHistogramName(string hname){
     else if(hname.find("Ht") != string::npos){
         hname_latex = "H_{T} [GeV]";
     }
+    else if(hname.find("ele_etaphi") != string::npos){
+        hname_latex = "#eta-#phi_{e}";
+        hname_latex += " (";
+        hname_latex += hname.substr(10);
+        hname_latex += ")";
+    }   
+    else if(hname.find("mu_etaphi") != string::npos){
+        hname_latex = "#eta-#phi_{#mu}";
+        hname_latex += " (";
+        hname_latex += hname.substr(9);
+        hname_latex += ")";
+    }   
     else if(hname.find("lep1_etaphi") != string::npos || hname.find("lep2_etaphi") != string::npos){
         hname_latex = "#eta-#phi_{l}";
         hname_latex += " (";
-        hname_latex += hname.substr(11);
+        hname_latex += hname.substr(10);
         hname_latex += ")";
     }   
     else if(hname.find("lep1_pt") != string::npos || hname.find("lep2_pt") != string::npos ||
@@ -522,6 +534,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
     int const lep2_etaphi_nbin = 50;
     H2vec(lep2_etaphi,lep2_eta_nbin,-2.5,2.5,lep2_phi_nbin,-3.2,3.2);
+
+    int const ele_etaphi_nbin = 50;
+    H2vec(ele_etaphi,lep2_eta_nbin,-2.5,2.5,lep2_phi_nbin,-3.2,3.2);
+
+    int const mu_etaphi_nbin = 50;
+    H2vec(mu_etaphi,lep2_eta_nbin,-2.5,2.5,lep2_phi_nbin,-3.2,3.2);
+
     
     // dilepton histograms
     int const pt_ll_nbin = 100;
@@ -870,10 +889,14 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           h_lep2_pt.at(i_bjet)->Fill(lep_pt->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_lep2_eta.at(i_bjet)->Fill(lep_eta->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_lep2_phi.at(i_bjet)->Fill(lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
-
-          // lepton 2D hists
+        
+          // lepton eta phi - leading/subleading and electron/muon
           h_lep1_etaphi.at(i_bjet)->Fill(lep_eta->at(0), lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_lep2_etaphi.at(i_bjet)->Fill(lep_eta->at(1), lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          if (abs(lep_pdgId->at(0)) == 11) h_ele_etaphi.at(i_bjet)->Fill(lep_eta->at(0), lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          if (abs(lep_pdgId->at(1)) == 11) h_ele_etaphi.at(i_bjet)->Fill(lep_eta->at(1), lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          if (abs(lep_pdgId->at(0)) == 13) h_mu_etaphi.at(i_bjet)->Fill(lep_eta->at(0), lep_phi->at(0), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          if (abs(lep_pdgId->at(1)) == 13) h_mu_etaphi.at(i_bjet)->Fill(lep_eta->at(1), lep_phi->at(1), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
       
           // dilepton hists
           h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
@@ -908,7 +931,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
     // make a vector of vectors of histograms for all the histograms
     std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_bjetphi, &h_bjeteta, &h_jetpt, &h_jetphi, &h_jeteta, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
-    std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi, &h_lep1_etaphi, &h_lep2_etaphi };   
+    std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi, &h_lep1_etaphi, &h_lep2_etaphi, &h_ele_etaphi, &h_mu_etaphi};   
 
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
@@ -933,6 +956,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     plotVariable2D(h_jetetaphi, sample_str, plotDir);
     plotVariable2D(h_lep1_etaphi, sample_str, plotDir);
     plotVariable2D(h_lep2_etaphi, sample_str, plotDir);
+    plotVariable2D(h_ele_etaphi, sample_str, plotDir);
+    plotVariable2D(h_mu_etaphi, sample_str, plotDir);
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
     plotVariable(h_bjetpt, sample_str, plotDir);
@@ -991,6 +1016,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
    WRITE_HISTOGRAM(h_lep2_eta)\
    WRITE_HISTOGRAM(h_lep2_phi)\
    WRITE_HISTOGRAM(h_lep2_etaphi)\
+   WRITE_HISTOGRAM(h_ele_etaphi)\
+   WRITE_HISTOGRAM(h_mu_etaphi)\
    WRITE_HISTOGRAM(h_pt_ll)\
    WRITE_HISTOGRAM(h_m_ll)\
    WRITE_HISTOGRAM(h_m_lb)\
