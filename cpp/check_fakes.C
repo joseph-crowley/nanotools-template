@@ -379,7 +379,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     
     const int NUM_NB_CATEGORIES = 5;
     const int BTAG_WP = 0; // 0 loose, 1 medium, 2 tight
-    constexpr float pt_threshold_btagged = 40.;
+    constexpr float pt_threshold_btagged = 25.;
     constexpr float pt_threshold_unbtagged = 25.;
 
     int const njet_nbin = 7;
@@ -643,8 +643,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
         if (is_btagged && pt < pt_threshold) is_btagged = 0;
         pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (pt > pt_threshold) {
-            Ht += pt;
-            
             if (PFMET_pt_final < 50.) continue;
 
             if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
@@ -848,7 +846,7 @@ bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
     double h2_error_norm = h2_error/binwidth;
 
     // compare the bin contents and errors to see if h1 < h2
-    //if (h1_integral_norm == h2_integral_norm) return true;
+    if (h1_integral_norm == h2_integral_norm) return true;
     return (h1_integral_norm < h2_integral_norm);
 }
 
@@ -930,8 +928,8 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
         // there may be more hists than colors
         // so use the modulo operator to cycle through the colors
         // set line color slightly lighter than fill color
-        hists_sorted[i].second->SetFillColor(colors[i%colors.size()]);
-        hists_sorted[i].second->SetLineColor(colors[i%colors.size()]+2);
+        hists_sorted[i].second->SetFillColor(colors[hists_sorted[i].first%colors.size()]);
+        hists_sorted[i].second->SetLineColor(colors[hists_sorted[i].first%colors.size()]+2);
         hists_sorted[i].second->SetLineWidth(1);
         hists_sorted[i].second->SetFillStyle(3001);
         hists_sorted[i].second->GetXaxis()->SetTitle("");
