@@ -14,12 +14,20 @@
  // set up a directive to stack all the hists
 #define STACK_HISTS_BTAG_CATEGORIES \
  STACK_HIST("jetpt")\
+ STACK_HIST("jeteta")\
+ STACK_HIST("jetphi")\
  STACK_HIST("nbjet_loose")\
  STACK_HIST("nbjet_medium")\
  STACK_HIST("nbjet_tight")\
  STACK_HIST("bjetpt_loose")\
  STACK_HIST("bjetpt_medium")\
- STACK_HIST("bjetpt_tight")
+ STACK_HIST("bjetpt_tight")\
+ STACK_HIST("bjetphi_loose")\
+ STACK_HIST("bjetphi_medium")\
+ STACK_HIST("bjetphi_tight")\
+ STACK_HIST("bjeteta_loose")\
+ STACK_HIST("bjeteta_medium")\
+ STACK_HIST("bjeteta_tight")
 
 #define STACK_HISTS_NB_CATEGORIES_LT2 \
  STACK_HIST("njet_nb_lt2")\
@@ -142,7 +150,10 @@
  STACK_HIST("m_lb_nb_gt2") \
  STACK_HIST("m_bb_nb_gt2") \
  STACK_HIST("dR_bb_nb_gt2")
- 
+
+#define STACK_HISTS2D \
+ STACK_HIST2D("jetetaphi")\
+ STACK_HIST2D("bjetetaphi")
 
  vector<string> rootFiles_2018;
  rootFiles_2018.push_back("outputs/mc/hists_all_real_b.root");
@@ -160,7 +171,17 @@ STACK_HISTS_NB_CATEGORIES_EQ2
 STACK_HISTS_NB_CATEGORIES_GT2
 #undef STACK_HIST 
 
+#define STACK_HIST2D(name) stackHists2D(name, rootFiles_2018, dirName);
+STACK_HISTS2D
+#undef STACK_HIST2D
 
-#undef STACK_HISTS
+#undef STACK_HISTS_BTAG_CATEGORIES
+#undef STACK_HISTS_NB_CATEGORIES_LT2
+#undef STACK_HISTS_NB_CATEGORIES_EQ0
+#undef STACK_HISTS_NB_CATEGORIES_EQ1
+#undef STACK_HISTS_NB_CATEGORIES_EQ2
+#undef STACK_HISTS_NB_CATEGORIES_GT2
+#undef STACK_HISTS2D
+
 }
 

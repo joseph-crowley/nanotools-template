@@ -1,6 +1,7 @@
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #include "TFile.h"
 #include "TH1D.h"
+#include "TH2D.h"
 #include "TTree.h"
 #include "TChain.h"
 #include "TTreeCache.h"
@@ -40,8 +41,8 @@ using namespace PlottingHelpers;
   for (unsigned int i=0; i<5; i++){ \
     /* name the categories lt2 eq2 gt2 eq1 eq0 */ \
     std::string catname = #name; \
-    if (catname == "jetpt") { if (i>0) break;} \
-    else if (catname == "nbjet" || catname == "bjetpt") { \
+    if (catname == "jetpt" || catname == "jetphi" || catname == "jeteta" || catname == "jetetaphi") { if (i>0) break;} \
+    else if (catname == "nbjet" || catname == "bjetpt" || catname == "bjetphi" || catname == "bjeteta" || catname == "bjetetaphi") { \
       if (i==0) catname += "_loose"; \
       else if (i==1) catname += "_medium"; \
       else if (i==2) catname += "_tight";} \
@@ -53,6 +54,26 @@ using namespace PlottingHelpers;
       else if (i==4) catname += "_nb_eq0"; \
     }\
     h_##name.push_back(new TH1D(catname.c_str(),catname.c_str(),nbins,low,high)); \
+  }
+
+#define H2vec(name,nbinsx,lowx,highx,nbinsy,lowy,highy) \
+  std::vector<TH2D *> h_##name ; \
+  for (unsigned int i=0; i<5; i++){ \
+    /* name the categories lt2 eq2 gt2 eq1 eq0 */ \
+    std::string catname = #name; \
+    if (catname == "jetetaphi") { if (i>0) break;} \
+    else if (catname == "bjetetaphi") { \
+      if (i==0) catname += "_loose"; \
+      else if (i==1) catname += "_medium"; \
+      else if (i==2) catname += "_tight";} \
+    else {\
+      if (i==0) catname += "_nb_lt2"; \
+      else if (i==1) catname += "_nb_eq2"; \
+      else if (i==2) catname += "_nb_gt2"; \
+      else if (i==3) catname += "_nb_eq1"; \
+      else if (i==4) catname += "_nb_eq0"; \
+    }\
+    h_##name.push_back(new TH2D(catname.c_str(),catname.c_str(),nbinsx,lowx,highx,nbinsy,lowy,highy)); \
   }
 
 // #define DEBUG
@@ -71,6 +92,9 @@ bool isLinearScale(string hname){
     
     if (hname.find("PVs") != string::npos) return true;
 
+    if (hname.find("eta") != string::npos) return true;
+    if (hname.find("phi") != string::npos) return true;
+
     return false;
 }
 
@@ -88,10 +112,31 @@ string getHistogramName(string hname){
         hname_latex += ")";
     }  
     else if(hname.find("bjetpt") != string::npos){
+        hname_latex = "#phi_{b}";
+        hname_latex += " (";
+        hname_latex += hname.substr(7);
+        hname_latex += ")";
+    }  
+    else if(hname.find("bjeteta") != string::npos){
+        hname_latex = "#eta_{b}";
+        hname_latex += " (";
+        hname_latex += hname.substr(7);
+        hname_latex += ")";
+    }  
+    else if(hname.find("bjetpt") != string::npos){
         hname_latex = "p_{T}^{b}";
         hname_latex += " (";
         hname_latex += hname.substr(7);
         hname_latex += ") [GeV]";
+    }  
+    else if(hname == "jetphi"){
+        hname_latex = "#phi_{j}";
+    }  
+    else if(hname == "jeteta"){
+        hname_latex = "#eta_{j}";
+    }  
+    else if(hname == "jetetaphi"){
+        hname_latex = "#eta_{j}";
     }  
     else if(hname == "jetpt"){
         hname_latex = "p_{T}^{j}";
@@ -130,10 +175,10 @@ string getHistogramName(string hname){
         }
     }
     else if(hname.find("dR_bb") != string::npos){
-        hname_latex = "dR_{bb}";
+        hname_latex = "dR_{bb}^{min}";
     }
     else if(hname.find("m_bb") != string::npos){
-        hname_latex = "m_{bb} [GeV]";
+        hname_latex = "m_{bb}^{min} [GeV]";
     }
     else if(hname.find("m_lb") != string::npos){
         hname_latex = "m_{lb} [GeV]";
@@ -165,8 +210,33 @@ void addTextToMarkers(TH1D *hist) {
    }
 }
 
+void plotVariable(std::vector<TH2D*> const& h_vars, string sample_str, string plotDir) {
+    for (auto const& h_var: h_vars){
+      std::cout << "plotting " << h_var->GetName() << std::endl;
+      TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
+      varPlot->cd();
+      //h_var->GetXaxis()->SetTitle(h_var->GetName());
+      //h_var->GetYaxis()->SetTitle("Events");
+      h_var->Draw("colz");
+      if (!isLinearScale(h_var->GetName())) varPlot->SetLogy();
+  
+      string varPlotName = plotDir + "/" + h_var->GetName() + "_";
+      varPlotName += sample_str;
+      varPlotName += ".pdf";
+      //varPlot->SaveAs(varPlotName.data());
+
+      varPlotName = plotDir + "/" + h_var->GetName() + "_";
+      varPlotName += sample_str;
+      varPlotName += ".png";
+      varPlot->SaveAs(varPlotName.data());
+    }
+
+    return;
+}
+
 void plotVariable(std::vector<TH1D*> const& h_vars, string sample_str, string plotDir) {
     for (auto const& h_var: h_vars){
+      std::cout << "plotting " << h_var->GetName() << std::endl;
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
       varPlot->cd();
       //h_var->GetXaxis()->SetTitle(h_var->GetName());
@@ -177,12 +247,12 @@ void plotVariable(std::vector<TH1D*> const& h_vars, string sample_str, string pl
       string varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
       varPlotName += ".pdf";
-      varPlot->SaveAs(varPlotName.data());
+      //varPlot->SaveAs(varPlotName.data());
 
       varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
       varPlotName += ".png";
-      varPlot->SaveAs(varPlotName.data());
+      //varPlot->SaveAs(varPlotName.data());
     }
 }
 
@@ -201,16 +271,15 @@ double getStackIntegral(THStack* stack)
 
 
 void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir, std::vector<pair<int, TH1D*> > hists_sorted, vector<string> legend_entries) {
-
+  std::cout << "making ratio plot for " << hname << std::endl;
 
   // get the integral of the stack
   double stack_integral = getStackIntegral(hs);
-  std::cout << "stack integral" << " for " << hname << ": " << stack_integral << std::endl;
-  
   if (stack_integral == 0) {
      std::cout << "stack integral is zero, skipping" << std::endl;
      return;
   }
+  std::cout << "stack integral: " << stack_integral << std::endl;
   
 
   // create a canvas to draw the plot on
@@ -366,6 +435,7 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir, std:
  
 
 int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int fake_category) {
+    std::cout << "ScanChain called with sample: " << sample_str << ", fake category: " << fake_category << std::endl;
     int nEventsChain = ch->GetEntries();
     TFile *currentFile = 0;
     TObjArray *listOfFiles = ch->GetListOfFiles();
@@ -395,8 +465,26 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     int const bjetpt_nbin = 100;
     H1vec(bjetpt,bjetpt_nbin,0,1000);
 
+    int const bjetphi_nbin = 32;
+    H1vec(bjetphi,bjetphi_nbin,-3.2,3.2);
+
+    int const bjeteta_nbin = 50;
+    H1vec(bjeteta,bjeteta_nbin,-2.5,2.5);
+
+    int const bjetetaphi_nbin = 50;
+    H2vec(bjetetaphi,bjeteta_nbin,-2.5,2.5,bjetphi_nbin,-3.2,3.2);
+
     int const jetpt_nbin = 100;
     H1vec(jetpt,jetpt_nbin,0,1000);
+
+    int const jetphi_nbin = 32;
+    H1vec(jetphi,jetphi_nbin,-3.2,3.2);
+
+    int const jeteta_nbin = 50;
+    H1vec(jeteta,jeteta_nbin,-2.5,2.5);
+
+    int const jetetaphi_nbin = 50;
+    H2vec(jetetaphi,jeteta_nbin,-2.5,2.5,jetphi_nbin,-3.2,3.2);
 
     int const nbjet_nbin = 7;
     H1vec(nbjet,nbjet_nbin,0,nbjet_nbin);
@@ -658,14 +746,29 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
         // defined by int(is_btagged_loose) + int(is_btagged_medium) + int(is_btagged_tight)
         auto is_btagged = jet_is_btagged->at(i);
         auto const& pt = jet_pt->at(i);
+        auto const& phi = jet_phi->at(i);
+        auto const& eta = jet_eta->at(i);
+
         float pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (is_btagged && pt < pt_threshold) is_btagged = 0;
         pt_threshold = (is_btagged ? pt_threshold_btagged : pt_threshold_unbtagged);
         if (pt > pt_threshold) {
             if (PFMET_pt_final < 50.) continue;
 
-            if (is_btagged == 0 ) h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
-            if (is_btagged > 0) h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            if (is_btagged == 0 ) {
+                h_jetpt.front()->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+                h_jetphi.front()->Fill(phi, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+                h_jeteta.front()->Fill(eta, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+
+                h_jetetaphi.front()->Fill(eta, phi, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            }
+            if (is_btagged > 0) {
+                h_bjetpt.at(is_btagged - 1)->Fill(pt, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+                h_bjetphi.at(is_btagged - 1)->Fill(phi, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+                h_bjeteta.at(is_btagged - 1)->Fill(eta, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+
+                h_bjetetaphi.at(is_btagged - 1)->Fill(eta, phi, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            }
         }
       }
 
@@ -688,10 +791,25 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
                 if (is_btagged == 0) continue;
                 TLorentzVector jet;
                 jet.SetPtEtaPhiM(jet_pt->at(i), jet_eta->at(i), jet_phi->at(i), jet_mass->at(i));
-                float dR_bb = dilep.DeltaR(jet);
-                if (dR_bb < min_dR_bb) min_dR_bb = dR_bb;
-                float m_bb = (dilep + jet).M();
-                if (m_bb < min_m_bb) min_m_bb = m_bb;
+
+                // loop over all other jets to calculate min_m_bb and min_dR_bb
+                for (unsigned int j = i + 1; j < njet; j++) {
+                    auto is_btagged2 = jet_is_btagged->at(j);
+                    auto const& pt2 = jet_pt->at(j);
+                    float pt_threshold2 = (is_btagged2 ? pt_threshold_btagged : pt_threshold_unbtagged);
+                    if (is_btagged2 && pt2 < pt_threshold2) is_btagged2 = 0;
+                    pt_threshold2 = (is_btagged2 ? pt_threshold_btagged : pt_threshold_unbtagged);
+                    if (pt2 > pt_threshold2) {
+                        if (is_btagged2 == 0) continue;
+                        TLorentzVector jet2;
+                        jet2.SetPtEtaPhiM(jet_pt->at(j), jet_eta->at(j), jet_phi->at(j), jet_mass->at(j));
+                        float m_bb = (jet + jet2).M();
+                        if (m_bb < min_m_bb) min_m_bb = m_bb;
+
+                        float dR_bb = jet.DeltaR(jet2);
+                        if (dR_bb < min_dR_bb) min_dR_bb = dR_bb;
+                    }
+                }
             }
         }
 
@@ -767,7 +885,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
 
     // make a vector of vectors of histograms for all the histograms
-    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
+    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_bjetphi, &h_bjeteta, &h_jetpt, &h_jetphi, &h_jeteta, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
+    std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi};
     
     for (int i = 0; i < histograms.size(); i++) {
         for (auto& histogram : *histograms.at(i)) {
@@ -777,14 +896,27 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
         }
     }
 
+    for (int i = 0; i < histograms2D.size(); i++) {
+        for (auto& histogram : *histograms2D.at(i)) {
+          int nbin = histogram->GetNbinsX();
+          histogram->SetBinContent(nbin, histogram->GetBinContent(nbin + 1) + histogram->GetBinContent(nbin));
+          histogram->SetBinError(nbin, std::sqrt(std::pow(histogram->GetBinError(nbin + 1), 2) + std::pow(histogram->GetBinError(nbin), 2)));
+        }
+    }
+
     bar.finish();
 
     // save histograms as png, pdf, and root files
-    // for all histograms {&h_bjetpt, &h_jetpt, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose}
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
-    plotVariable(h_jetpt, sample_str, plotDir);
     plotVariable(h_bjetpt, sample_str, plotDir);
+    plotVariable(h_bjeteta, sample_str, plotDir);
+    plotVariable(h_bjetphi, sample_str, plotDir);
+    plotVariable(h_bjetetaphi, sample_str, plotDir);
+    plotVariable(h_jetpt, sample_str, plotDir);
+    plotVariable(h_jeteta, sample_str, plotDir);
+    plotVariable(h_jetphi, sample_str, plotDir);
+    plotVariable(h_jetetaphi, sample_str, plotDir);
     plotVariable(h_met, sample_str, plotDir);
     plotVariable(h_Ht, sample_str, plotDir);
     plotVariable(h_lep1_pt, sample_str, plotDir);
@@ -817,7 +949,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 #define WRITE_HISTOGRAMS \
    WRITE_HISTOGRAM(h_nbjet)\
    WRITE_HISTOGRAM(h_bjetpt)\
+   WRITE_HISTOGRAM(h_bjetphi)\
+   WRITE_HISTOGRAM(h_bjeteta)\
+   WRITE_HISTOGRAM(h_bjetetaphi)\
    WRITE_HISTOGRAM(h_jetpt)\
+   WRITE_HISTOGRAM(h_jetphi)\
+   WRITE_HISTOGRAM(h_jeteta)\
+   WRITE_HISTOGRAM(h_jetetaphi)\
    WRITE_HISTOGRAM(h_njet)\
    WRITE_HISTOGRAM(h_met)\
    WRITE_HISTOGRAM(h_Ht)\
@@ -849,6 +987,41 @@ WRITE_HISTOGRAMS
     f->Close();
 
     return 0;
+}
+
+bool compareHists2D(pair<int, TH2D*> p1, pair<int, TH2D*> p2){
+    // get the histograms
+    TH2D* h1 = p1.second;
+    TH2D* h2 = p2.second;
+    
+    // get the number of bins
+    int nbinsx = h1->GetNbinsX();
+    int nbinsy = h1->GetNbinsY();
+    // get the bin width
+    double binwidthx = h1->GetBinWidth(1);
+    double binwidthy = h1->GetBinWidth(1);
+    // get the bin contents
+    double h1_integral = 0;
+    double h2_integral = 0;
+    for(int i = 1; i <= nbinsx; i++){
+        for(int j = 1; j <= nbinsy; j++){
+            h1_integral += h1->GetBinContent(i, j);
+            h2_integral += h2->GetBinContent(i, j);
+        }
+    }
+    // get the bin errors
+    double h1_error = 0;
+    double h2_error = 0;
+    for(int i = 1; i <= nbinsx; i++){
+        for(int j = 1; j <= nbinsy; j++){
+            h1_error += h1->GetBinError(i, j);
+            h2_error += h2->GetBinError(i, j);
+        }
+    }
+
+    // compare the integrals normalized by the bin width
+    
+    return h1_integral*binwidthx*binwidthy > h2_integral*binwidthx*binwidthy;
 }
 
 // define a compareHists function for comparing the histograms 
@@ -890,6 +1063,99 @@ bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
     // compare the bin contents and errors to see if h1 < h2
     if (h1_integral_norm == h2_integral_norm) return true;
     return (h1_integral_norm < h2_integral_norm);
+}
+
+int stackHists2D(string hname, vector<string> rootFiles, string plotDir){
+    // stack histogram hname from rootFiles, make a plot, save the plot,
+    // save the stacked histograms to a root file
+
+    // get the histogram name in latex format
+    string hname_latex = getHistogramName(hname);
+
+    // separate data 
+    TH2D* h_data = NULL;
+    string entry_data;
+    vector<TH2D*> hists;
+    vector<string> legend_entries;
+    for(int i = 0; i < rootFiles.size(); i++){
+        TFile* f = new TFile(rootFiles[i].data());
+        TH2D* h = (TH2D*)f->Get(hname.data());
+
+        // create a vector of legend entries from the root file names
+        
+        // for data
+        // remove the path and the .root extension
+        if (rootFiles[i].find("data") != string::npos){
+            string entry = rootFiles[i].substr(rootFiles[i].find_last_of("/")+1);
+            entry = entry.substr(0, entry.find_last_of("."));
+            entry_data = entry;
+            h_data = h;
+        }
+        // for MC
+        // remove the path and the .root extension
+        else{
+            string entry = rootFiles[i].substr(rootFiles[i].find_last_of("/")+1);
+            entry = entry.substr(0, entry.find_last_of("."));
+            legend_entries.push_back(entry);
+            hists.push_back(h);
+        }
+    }
+
+    // sort the histograms by the number of events
+    vector<pair<int, TH2D*> > hists_sorted;
+    for(int i = 0; i < hists.size(); i++){
+        int nEvents = hists[i]->Integral();
+        hists_sorted.push_back(make_pair(nEvents, hists[i]));
+    }
+    sort(hists_sorted.begin(), hists_sorted.end(), compareHists2D);
+
+    // stack the histograms
+    THStack* hs = new THStack("hs", "");
+    for(int i = 0; i < hists_sorted.size(); i++){
+        hs->Add(hists_sorted[i].second);
+    }
+
+    // make a plot
+    TCanvas* c = new TCanvas("c", "", 800, 600);
+    c->SetLogz();
+    hs->Draw("colz");
+    hs->GetXaxis()->SetTitle(hname_latex.data());
+    hs->GetYaxis()->SetTitle("Events");
+    hs->GetYaxis()->SetTitleOffset(1.5);
+    hs->SetMinimum(1);
+    hs->SetMaximum(1000000);
+    hs->Draw("colz");
+    
+    // draw the data histogram
+    if (h_data != NULL){
+        h_data->SetMarkerStyle(20);
+        h_data->SetMarkerSize(1);
+        h_data->SetMarkerColor(kBlack);
+        h_data->Draw("same");
+    }
+
+    // make a legend
+    TLegend* leg = new TLegend(0.7, 0.7, 0.9, 0.9);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->SetTextSize(0.03);
+    leg->AddEntry(h_data, entry_data.data(), "p");
+    for(int i = 0; i < legend_entries.size(); i++){
+        leg->AddEntry(hists_sorted[i].second, legend_entries[i].data(), "f");
+    }
+    leg->Draw();
+
+    // save the plot
+    string plotName = plotDir + "/" + hname + ".pdf";
+    c->SaveAs(plotName.data());
+
+    // save the stacked histograms to a root file
+    string rootName = plotDir + "/" + hname + ".root";
+    TFile* f = new TFile(rootName.data(), "RECREATE");
+    hs->Write();
+    f->Close();
+
+    return 0;
 }
 
 // Create a macro to stack the histograms and make a plot
@@ -1027,7 +1293,10 @@ int stackHists(string hname, vector<string> rootFiles, string plotDir){
     f->Write();
     f->Close();
 
+    std::cout << "stacked histograms saved to " << outfile_name << std::endl;
+    std::cout << "creating ratio plot" << std::endl;
     makeRatioPlot(hs, h_data, hname, plotDir, hists_sorted, legend_entries);
+    std::cout << "finished ratio plot for " << hname << std::endl;
 
     // clean up memory
     delete c;
