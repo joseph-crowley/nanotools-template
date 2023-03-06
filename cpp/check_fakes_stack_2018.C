@@ -151,9 +151,11 @@
  STACK_HIST("m_bb_nb_gt2") \
  STACK_HIST("dR_bb_nb_gt2")
 
-#define STACK_HISTS2D \
- STACK_HIST2D("jetetaphi")\
- STACK_HIST2D("bjetetaphi")
+#define PLOT_HISTS2D \
+ PLOT_HIST2D("jetetaphi")\
+ PLOT_HIST2D("bjetetaphi_loose")\
+ PLOT_HIST2D("bjetetaphi_medium")\
+ PLOT_HIST2D("bjetetaphi_tight")
 
  vector<string> rootFiles_2018;
  rootFiles_2018.push_back("outputs/mc/hists_all_real_b.root");
@@ -171,9 +173,9 @@ STACK_HISTS_NB_CATEGORIES_EQ2
 STACK_HISTS_NB_CATEGORIES_GT2
 #undef STACK_HIST 
 
-#define STACK_HIST2D(name) stackHists2D(name, rootFiles_2018, dirName);
-STACK_HISTS2D
-#undef STACK_HIST2D
+#define PLOT_HIST2D(name) plotHists2D(name, "outputs/data/hists_Data_2018.root", dirName);
+PLOT_HISTS2D
+#undef PLOT_HIST2D
 
 #undef STACK_HISTS_BTAG_CATEGORIES
 #undef STACK_HISTS_NB_CATEGORIES_LT2

@@ -41,8 +41,8 @@ using namespace PlottingHelpers;
   for (unsigned int i=0; i<5; i++){ \
     /* name the categories lt2 eq2 gt2 eq1 eq0 */ \
     std::string catname = #name; \
-    if (catname == "jetpt" || catname == "jetphi" || catname == "jeteta" || catname == "jetetaphi") { if (i>0) break;} \
-    else if (catname == "nbjet" || catname == "bjetpt" || catname == "bjetphi" || catname == "bjeteta" || catname == "bjetetaphi") { \
+    if (catname == "jetpt" || catname == "jetphi" || catname == "jeteta") { if (i>0) break;} \
+    else if (catname == "nbjet" || catname == "bjetpt" || catname == "bjetphi" || catname == "bjeteta") { \
       if (i==0) catname += "_loose"; \
       else if (i==1) catname += "_medium"; \
       else if (i==2) catname += "_tight";} \
@@ -111,12 +111,12 @@ string getHistogramName(string hname){
         hname_latex += hname.substr(6);
         hname_latex += ")";
     }  
-    else if(hname.find("bjetpt") != string::npos){
-        hname_latex = "#phi_{b}";
+    else if(hname.find("bjetetaphi") != string::npos){
+        hname_latex = "#eta-#phi_{b}";
         hname_latex += " (";
-        hname_latex += hname.substr(7);
+        hname_latex += hname.substr(11);
         hname_latex += ")";
-    }  
+    }   
     else if(hname.find("bjeteta") != string::npos){
         hname_latex = "#eta_{b}";
         hname_latex += " (";
@@ -136,7 +136,7 @@ string getHistogramName(string hname){
         hname_latex = "#eta_{j}";
     }  
     else if(hname == "jetetaphi"){
-        hname_latex = "#eta_{j}";
+        hname_latex = "#eta-#phi_{j}";
     }  
     else if(hname == "jetpt"){
         hname_latex = "p_{T}^{j}";
@@ -210,7 +210,7 @@ void addTextToMarkers(TH1D *hist) {
    }
 }
 
-void plotVariable(std::vector<TH2D*> const& h_vars, string sample_str, string plotDir) {
+void plotVariable2D(std::vector<TH2D*> const& h_vars, string sample_str, string plotDir) {
     for (auto const& h_var: h_vars){
       std::cout << "plotting " << h_var->GetName() << std::endl;
       TCanvas *varPlot = new TCanvas(h_var->GetName(), "", 1000,800);
@@ -228,7 +228,7 @@ void plotVariable(std::vector<TH2D*> const& h_vars, string sample_str, string pl
       varPlotName = plotDir + "/" + h_var->GetName() + "_";
       varPlotName += sample_str;
       varPlotName += ".png";
-      varPlot->SaveAs(varPlotName.data());
+      //varPlot->SaveAs(varPlotName.data());
     }
 
     return;
@@ -907,16 +907,16 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     bar.finish();
 
     // save histograms as png, pdf, and root files
+    plotVariable2D(h_bjetetaphi, sample_str, plotDir);
+    plotVariable2D(h_jetetaphi, sample_str, plotDir);
     plotVariable(h_njet, sample_str, plotDir);
     plotVariable(h_nbjet, sample_str, plotDir);
     plotVariable(h_bjetpt, sample_str, plotDir);
     plotVariable(h_bjeteta, sample_str, plotDir);
     plotVariable(h_bjetphi, sample_str, plotDir);
-    plotVariable(h_bjetetaphi, sample_str, plotDir);
     plotVariable(h_jetpt, sample_str, plotDir);
     plotVariable(h_jeteta, sample_str, plotDir);
     plotVariable(h_jetphi, sample_str, plotDir);
-    plotVariable(h_jetetaphi, sample_str, plotDir);
     plotVariable(h_met, sample_str, plotDir);
     plotVariable(h_Ht, sample_str, plotDir);
     plotVariable(h_lep1_pt, sample_str, plotDir);
@@ -998,8 +998,8 @@ bool compareHists2D(pair<int, TH2D*> p1, pair<int, TH2D*> p2){
     int nbinsx = h1->GetNbinsX();
     int nbinsy = h1->GetNbinsY();
     // get the bin width
-    double binwidthx = h1->GetBinWidth(1);
-    double binwidthy = h1->GetBinWidth(1);
+    double binwidthx = h1->GetXaxis()->GetBinWidth(1);
+    double binwidthy = h1->GetYaxis()->GetBinWidth(1);
     // get the bin contents
     double h1_integral = 0;
     double h2_integral = 0;
@@ -1009,19 +1009,12 @@ bool compareHists2D(pair<int, TH2D*> p1, pair<int, TH2D*> p2){
             h2_integral += h2->GetBinContent(i, j);
         }
     }
-    // get the bin errors
-    double h1_error = 0;
-    double h2_error = 0;
-    for(int i = 1; i <= nbinsx; i++){
-        for(int j = 1; j <= nbinsy; j++){
-            h1_error += h1->GetBinError(i, j);
-            h2_error += h2->GetBinError(i, j);
-        }
-    }
+    // get the integral
+    h1_integral *= binwidthx * binwidthy;
+    h2_integral *= binwidthx * binwidthy;
 
-    // compare the integrals normalized by the bin width
-    
-    return h1_integral*binwidthx*binwidthy > h2_integral*binwidthx*binwidthy;
+    // compare the integrals
+    return h1_integral > h2_integral;
 }
 
 // define a compareHists function for comparing the histograms 
@@ -1063,6 +1056,34 @@ bool compareHists(pair<int, TH1D*> p1, pair<int, TH1D*> p2){
     // compare the bin contents and errors to see if h1 < h2
     if (h1_integral_norm == h2_integral_norm) return true;
     return (h1_integral_norm < h2_integral_norm);
+}
+
+
+int plotHists2D(string hname, string rootFile, string plotDir){
+    // take a look at the eta - phi plane for bs and non-bs. Only in data 2018D for now. There is no need for the MC for this one. Make sure you apply the MET>50 GeV and lepton pT cuts. Start the pT of bs and jets at 25 GeV.
+
+    // get the histogram name in latex format
+    string hname_latex = getHistogramName(hname);
+
+    TFile* f = new TFile(rootFile.data());
+    TH2D* h = (TH2D*)f->Get(hname.data());
+
+    // make a plot
+    TCanvas* c = new TCanvas("c", "c", 800, 600);
+    c->SetLogz();
+    h->Draw("colz");
+    h->GetXaxis()->SetTitle("eta");
+    h->GetYaxis()->SetTitle("phi");
+    h->SetTitle(hname_latex.data());
+    h->SetStats(0);
+    h->SetMaximum(1000);
+    h->SetMinimum(1);
+    c->SaveAs((plotDir + "/" + hname + ".png").data());
+    c->SaveAs((plotDir + "/" + hname + ".pdf").data());
+
+    return 0;
+
+
 }
 
 int stackHists2D(string hname, vector<string> rootFiles, string plotDir){
@@ -1115,16 +1136,20 @@ int stackHists2D(string hname, vector<string> rootFiles, string plotDir){
         hs->Add(hists_sorted[i].second);
     }
 
+    // calculate the maximum and minimum values for the plot based on the stacked histograms
+    float PLOT_MIN = 0.8 * hs->GetMinimum();
+    float PLOT_MAX = 1.2 * hs->GetMaximum();
+
     // make a plot
     TCanvas* c = new TCanvas("c", "", 800, 600);
-    c->SetLogz();
+    //c->SetLogz();
     hs->Draw("colz");
     hs->GetXaxis()->SetTitle(hname_latex.data());
     hs->GetYaxis()->SetTitle("Events");
     hs->GetYaxis()->SetTitleOffset(1.5);
-    hs->SetMinimum(1);
-    hs->SetMaximum(1000000);
-    hs->Draw("colz");
+    hs->SetMinimum(PLOT_MIN);
+    hs->SetMaximum(PLOT_MAX);
+    hs->Draw("nostack");
     
     // draw the data histogram
     if (h_data != NULL){
@@ -1147,6 +1172,9 @@ int stackHists2D(string hname, vector<string> rootFiles, string plotDir){
 
     // save the plot
     string plotName = plotDir + "/" + hname + ".pdf";
+    c->SaveAs(plotName.data());
+
+    plotName = plotDir + "/" + hname + ".png";
     c->SaveAs(plotName.data());
 
     // save the stacked histograms to a root file
