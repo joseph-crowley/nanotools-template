@@ -22,6 +22,7 @@
 #include "TLorentzVector.h"
 
 #include "lepton_sfs_el.h"
+#include "lepton_sfs_mu.h"
 
 #include <iostream>
 #include <iomanip>
@@ -87,17 +88,16 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
     ch->SetBranchAddress("nleptons_loose", &nleptons_loose);
 
     // histograms
-    TH1D *h_nleptons_loose = new TH1D("h_nleptons_loose", "h_nleptons_loose", 10, 0, 10);
-    TH1D *h_nleptons_fakeable = new TH1D("h_nleptons_fakeable", "h_nleptons_fakeable", 10, 0, 10);
-    TH1D *h_nmuons_loose = new TH1D("h_nmuons_loose", "h_nmuons_loose", 10, 0, 10);
-    TH1D *h_nmuons_fakeable = new TH1D("h_nmuons_fakeable", "h_nmuons_fakeable", 10, 0, 10);
-    TH1D *h_nelectrons_loose = new TH1D("h_nelectrons_loose", "h_nelectrons_loose", 10, 0, 10);
-    TH1D *h_nelectrons_fakeable = new TH1D("h_nelectrons_fakeable", "h_nelectrons_fakeable", 10, 0, 10);
-    TH1D *h_mll = new TH1D("h_mll", "h_mll", 100, 0, 200);
-    TH1D *h_mll_os = new TH1D("h_mll_os", "h_mll_os", 100, 0, 200);
-    TH1D *h_mll_os_ee = new TH1D("h_mll_os_ee", "h_mll_os_ee", 100, 0, 200);
-    TH1D *h_mll_os_mm = new TH1D("h_mll_os_mm", "h_mll_os_mm", 100, 0, 200);
-    TH1D *h_mll_os_em = new TH1D("h_mll_os_em", "h_mll_os_em", 100, 0, 200);
+    TH1D *h_nleptons_loose = new TH1D("h_nleptons_loose", "h_nleptons_loose", 5, 0, 5);
+    TH1D *h_nleptons_fakeable = new TH1D("h_nleptons_fakeable", "h_nleptons_fakeable", 5, 0, 5);
+    TH1D *h_nmuons_loose = new TH1D("h_nmuons_loose", "h_nmuons_loose", 5, 0, 5);
+    TH1D *h_nmuons_fakeable = new TH1D("h_nmuons_fakeable", "h_nmuons_fakeable", 5, 0, 5);
+    TH1D *h_nelectrons_loose = new TH1D("h_nelectrons_loose", "h_nelectrons_loose", 5, 0, 5);
+    TH1D *h_nelectrons_fakeable = new TH1D("h_nelectrons_fakeable", "h_nelectrons_fakeable", 5, 0, 5);
+    TH1D *h_mll_os = new TH1D("h_mll_os", "h_mll_os", 70, 50, 140);
+    TH1D *h_mll_os_ee = new TH1D("h_mll_os_ee", "h_mll_os_ee", 70, 50, 140);
+    TH1D *h_mll_os_mm = new TH1D("h_mll_os_mm", "h_mll_os_mm", 70, 50, 140);
+    TH1D *h_mll_os_em = new TH1D("h_mll_os_em", "h_mll_os_em", 70, 50, 140);
 
     // event loop
     Long64_t nentries = ch->GetEntries();
@@ -115,9 +115,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
                 event_wgt_SFs_leptons *= electronScaleFactor_RunABCD(lep_pt->at(i), lep_eta->at(i));
                 event_wgt_SFs_leptons *= electronScaleFactorReco_RunABCD(lep_pt->at(i), lep_eta->at(i));
               }
-              //if (lep_pdgId->at(i) == 13) {
-              //  event_wgt_SFs_leptons *= muonScaleFactor_RunABCD(lep_pt->at(i), lep_eta->at(i));
-              //}
+              if (lep_pdgId->at(i) == 13) {
+                event_wgt_SFs_leptons *= muonScaleFactor_RunABCD(lep_pt->at(i), lep_eta->at(i));
+              }
             }
         }
         float event_weight = event_wgt * event_wgt_adjustment_L1Prefiring * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_SFs_leptons;
@@ -141,7 +141,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
                     lep2.SetPtEtaPhiM(lep_pt->at(ilep2), lep_eta->at(ilep2), lep_phi->at(ilep2), lep_mass->at(ilep2));
                     TLorentzVector dilep = lep1 + lep2;
 
-                    if (dilep.M() - 91.2 > 15.) continue;
+                    if (abs(dilep.M() - 91.2) > 30.) continue;
                     
                     h_mll_os->Fill(dilep.M(), event_weight);
                     if (abs(lep_pdgId->at(ilep1)) == 11 && abs(lep_pdgId->at(ilep2)) == 11) {
@@ -152,7 +152,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir) {
                         h_mll_os_mm->Fill(dilep.M(), event_weight);
                     }
 
-                    if (abs(lep_pdgId->at(ilep1)) == 11 && abs(lep_pdgId->at(ilep2)) == 13) {
+                    if ((abs(lep_pdgId->at(ilep1)) == 11 && abs(lep_pdgId->at(ilep2)) == 13) || (abs(lep_pdgId->at(ilep1)) == 13 && abs(lep_pdgId->at(ilep2)) == 11)) {
                         h_mll_os_em->Fill(dilep.M(), event_weight);
                     }
                 }
@@ -304,7 +304,9 @@ void makeRatioPlot(string hname, std::vector<string> rootfiles, string plotDir) 
 
     float PLOT_MAX = std::max(h_mc->GetMaximum(), h_data->GetMaximum())*1.2;
     //float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(h_mc->GetMinimum(), h_data->GetMinimum())), 0.001);
-    float PLOT_MIN = std::max(0.1, 0.75 * std::min(h_mc->GetMinimum(), h_data->GetMinimum()));
+    float PLOT_MIN;
+    if (hname.find("os") == std::string::npos) PLOT_MIN = 10;
+    if (hname.find("os") != std::string::npos) PLOT_MIN = 1000;
 
     // draw the histogram in the top pad
     plot.getInsidePanels()[0][1]->cd();
