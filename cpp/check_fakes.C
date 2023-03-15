@@ -204,6 +204,12 @@ string getHistogramName(string hname){
     else if(hname.find("pt_ll") != string::npos){
         hname_latex = "p_{T}^{l l} [GeV]";
     }
+    else if(hname.find("m_ee") != string::npos){
+        hname_latex = "m_{ee} [GeV]";
+    }
+    else if(hname.find("m_mumu") != string::npos){
+        hname_latex = "m_{#mu#mu} [GeV]";
+    }
     else if(hname.find("m_ll") != string::npos){
         hname_latex = "m_{ll} [GeV]";
     }
@@ -307,7 +313,17 @@ void makeRatioPlot(THStack* hs, TH1D* h_data, string hname, string plotDir, std:
 
   float PLOT_MAX = std::max(hs->GetMaximum(), h_data->GetMaximum())*1.2;
   //float PLOT_MIN = std::max(0.8 * std::min(0.1, std::min(hs->GetMinimum(), h_data->GetMinimum())), 0.001);
-  float PLOT_MIN = std::max(0.1, 0.75 * std::min(hs->GetMinimum(), h_data->GetMinimum()));
+  //float PLOT_MIN = std::max(0.1, 0.75 * std::min(hs->GetMinimum(), h_data->GetMinimum()));
+
+  // calculate the minimum non-zero value for PLOT_MIN
+  float PLOT_MIN = PLOT_MAX;
+  for (int i = 1; i <= h_data->GetNbinsX(); i++) {
+     float value = h_data->GetBinContent(i);
+     if (value == 0) continue;
+     PLOT_MIN = std::min(PLOT_MIN, value);
+  }
+
+  PLOT_MIN = std::max(0.1, 0.75 * PLOT_MIN);
 
   // draw the histogram stack in the top pad
   plot.getInsidePanels()[0][1]->cd();
@@ -547,11 +563,21 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     H1vec(pt_ll,pt_ll_nbin,0,1000);
 
     // invariant mass histograms
+
+    // to see the Z peak
+    int const m_ee_nbin = 70;
+    H1vec(m_ee,m_ee_nbin, 50, 120);
+
+    int const m_mumu_nbin = 70;
+    H1vec(m_mumu,m_mumu_nbin, 50, 120);
+
     int const m_ll_nbin = 40;
-    int const m_lb_nbin = 40;
-    int const m_bb_nbin = 40;
     H1vec(m_ll,m_ll_nbin,0,1000);
+
+    int const m_lb_nbin = 40;
     H1vec(m_lb,m_lb_nbin,0,1000);
+
+    int const m_bb_nbin = 40;
     H1vec(m_bb,m_bb_nbin,0,1000);
 
     // delta R histograms
@@ -668,6 +694,13 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
     unsigned int nleptons_loose;
     ch->SetBranchAddress("nleptons_loose", &nleptons_loose);
+
+    // Add dilepton variables
+    int dilepton_id;
+    ch->SetBranchAddress("dilepton_id", &dilepton_id);
+
+    float dilepton_mass;
+    ch->SetBranchAddress("dilepton_mass", &dilepton_mass);
 
     //TODO: calculate masses with b's, for L,M,T categories.
     float min_mbb_WPL;
@@ -905,6 +938,14 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           h_m_bb.at(i_bjet)->Fill(min_m_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_dR_bb.at(i_bjet)->Fill(min_dR_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
+          // Z peak hists
+          if (abs(dilepton_id) == 169) {
+            h_m_mumu.at(i_bjet)->Fill(dilepton_mass, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          }
+          if (abs(dilepton_id) == 121) {
+            h_m_mumu.at(i_bjet)->Fill(dilepton_mass, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          }
+
           // Primary vertex hists 
             h_nPVs.at(i_bjet)->Fill(nPVs, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
             h_nPVs_good.at(i_bjet)->Fill(nPVs_good, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
@@ -930,7 +971,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
 
     // make a vector of vectors of histograms for all the histograms
-    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_bjetphi, &h_bjeteta, &h_jetpt, &h_jetphi, &h_jeteta, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
+    std::vector<std::vector<TH1D *> *> histograms {&h_bjetpt, &h_bjetphi, &h_bjeteta, &h_jetpt, &h_jetphi, &h_jeteta, &h_nbjet, &h_njet, &h_met, &h_Ht, &h_lep1_pt, &h_lep1_eta, &h_lep1_phi, &h_lep2_pt, &h_lep2_eta, &h_lep2_phi, &h_m_ll, &h_m_ee, &h_m_mumu, &h_pt_ll, &h_nPVs, &h_nPVs_good, &h_nleptons_fakeable, &h_nleptons_loose, &h_nelectrons_fakeable, &h_nelectrons_loose, &h_nmuons_fakeable, &h_nmuons_loose};
     std::vector<std::vector<TH2D *> *> histograms2D {&h_bjetetaphi, &h_jetetaphi, &h_lep1_etaphi, &h_lep2_etaphi, &h_ele_etaphi, &h_mu_etaphi};   
 
     for (int i = 0; i < histograms.size(); i++) {
@@ -976,6 +1017,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     plotVariable(h_lep2_phi, sample_str, plotDir);
     plotVariable(h_pt_ll, sample_str, plotDir);
     plotVariable(h_m_ll, sample_str, plotDir);
+    plotVariable(h_m_ee, sample_str, plotDir);
+    plotVariable(h_m_mumu, sample_str, plotDir);
     plotVariable(h_m_lb, sample_str, plotDir);
     plotVariable(h_m_bb, sample_str, plotDir);
     plotVariable(h_dR_bb, sample_str, plotDir);
@@ -1020,6 +1063,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
    WRITE_HISTOGRAM(h_mu_etaphi)\
    WRITE_HISTOGRAM(h_pt_ll)\
    WRITE_HISTOGRAM(h_m_ll)\
+   WRITE_HISTOGRAM(h_m_ee)\
+   WRITE_HISTOGRAM(h_m_mumu)\
    WRITE_HISTOGRAM(h_m_lb)\
    WRITE_HISTOGRAM(h_m_bb)\
    WRITE_HISTOGRAM(h_dR_bb)\

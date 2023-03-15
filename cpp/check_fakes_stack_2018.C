@@ -32,6 +32,8 @@
 #define STACK_HISTS_NB_CATEGORIES_LT2 \
  STACK_HIST("njet_nb_lt2")\
  STACK_HIST("m_ll_nb_lt2")\
+ STACK_HIST("m_ee_nb_lt2")\
+ STACK_HIST("m_mumu_nb_lt2")\
  STACK_HIST("met_nb_lt2")\
  STACK_HIST("Ht_nb_lt2")\
  STACK_HIST("lep1_pt_nb_lt2")\
@@ -57,6 +59,8 @@
 #define STACK_HISTS_NB_CATEGORIES_EQ0 \
  STACK_HIST("njet_nb_eq0")\
  STACK_HIST("m_ll_nb_eq0")\
+ STACK_HIST("m_ee_nb_eq0")\
+ STACK_HIST("m_mumu_nb_eq0")\
  STACK_HIST("met_nb_eq0")\
  STACK_HIST("Ht_nb_eq0")\
  STACK_HIST("lep1_pt_nb_eq0")\
@@ -81,6 +85,8 @@
 #define STACK_HISTS_NB_CATEGORIES_EQ1 \
  STACK_HIST("njet_nb_eq1")\
  STACK_HIST("m_ll_nb_eq1")\
+ STACK_HIST("m_ee_nb_eq1")\
+ STACK_HIST("m_mumu_nb_eq1")\
  STACK_HIST("met_nb_eq1")\
  STACK_HIST("Ht_nb_eq1")\
  STACK_HIST("lep1_pt_nb_eq1")\
@@ -105,6 +111,8 @@
 #define STACK_HISTS_NB_CATEGORIES_EQ2 \
  STACK_HIST("njet_nb_eq2")\
  STACK_HIST("m_ll_nb_eq2")\
+ STACK_HIST("m_ee_nb_eq2")\
+ STACK_HIST("m_mumu_nb_eq2")\
  STACK_HIST("met_nb_eq2")\
  STACK_HIST("Ht_nb_eq2")\
  STACK_HIST("lep1_pt_nb_eq2")\
@@ -130,6 +138,8 @@
 #define STACK_HISTS_NB_CATEGORIES_GT2 \
  STACK_HIST("njet_nb_gt2")\
  STACK_HIST("m_ll_nb_gt2")\
+ STACK_HIST("m_ee_nb_gt2")\
+ STACK_HIST("m_mumu_nb_gt2")\
  STACK_HIST("met_nb_gt2")\
  STACK_HIST("Ht_nb_gt2")\
  STACK_HIST("lep1_pt_nb_gt2")\
@@ -177,12 +187,30 @@
  PLOT_HIST2D("lep2_etaphi_nb_eq2")\
  PLOT_HIST2D("lep2_etaphi_nb_gt2")
 
+ vector<string> rootFiles_2018_samples;
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_TTV.root");
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_Others.root");
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_ST_tW.root");
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_TT_2l2nu.root");
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_TT_lnu.root");
+ rootFiles_2018_samples.push_back("outputs/mc/hists_2018_WW.root");
+ rootFiles_2018_samples.push_back("outputs/data/hists_Data_2018.root");
+
  vector<string> rootFiles_2018;
  rootFiles_2018.push_back("outputs/mc/hists_all_real_b.root");
  rootFiles_2018.push_back("outputs/mc/hists_1c_1j.root");
  rootFiles_2018.push_back("outputs/mc/hists_1c_0j.root");
  rootFiles_2018.push_back("outputs/mc/hists_0c_1j.root");
  rootFiles_2018.push_back("outputs/data/hists_Data_2018.root");
+
+#define STACK_HIST(name) stackHists(name, rootFiles_2018_samples, dirName);
+STACK_HISTS_BTAG_CATEGORIES
+STACK_HISTS_NB_CATEGORIES_LT2
+STACK_HISTS_NB_CATEGORIES_EQ0
+STACK_HISTS_NB_CATEGORIES_EQ1
+STACK_HISTS_NB_CATEGORIES_EQ2
+STACK_HISTS_NB_CATEGORIES_GT2
+#undef STACK_HIST 
 
 #define STACK_HIST(name) stackHists(name, rootFiles_2018, dirName);
 STACK_HISTS_BTAG_CATEGORIES
