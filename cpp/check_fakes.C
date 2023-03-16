@@ -198,6 +198,9 @@ string getHistogramName(string hname){
     else if(hname.find("m_bb") != string::npos){
         hname_latex = "m_{bb}^{min} [GeV]";
     }
+    else if(hname.find("dR_lb") != string::npos){
+        hname_latex = "#delta R_{l b}";
+    }
     else if(hname.find("m_lb") != string::npos){
         hname_latex = "m_{l b} [GeV]";
     }
@@ -577,6 +580,9 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     int const m_lb_nbin = 40;
     H1vec(m_lb,m_lb_nbin,0,1000);
 
+    int const dR_lb_nbin = 40;
+    H1vec(dR_lb,dR_lb_nbin,0,5);
+
     int const m_bb_nbin = 40;
     H1vec(m_bb,m_bb_nbin,0,1000);
 
@@ -848,6 +854,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
 
       // calculate min_m_bb and dR_bb
         float min_m_bb = 9999.;
+        float min_m_lb = 9999.;
+        float min_dR_lb = 9999.;
         float min_dR_bb = 9999.;
         for (unsigned int i = 0; i < njet; i++) {
             auto is_btagged = jet_is_btagged->at(i);
@@ -860,7 +868,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
                 TLorentzVector jet;
                 jet.SetPtEtaPhiM(jet_pt->at(i), jet_eta->at(i), jet_phi->at(i), jet_mass->at(i));
 
-                // loop over all other jets to calculate min_m_bb and min_dR_bb
+                // loop over all other jets to calculate min_m_bb and min_dR_bb 
                 for (unsigned int j = i + 1; j < njet; j++) {
                     auto is_btagged2 = jet_is_btagged->at(j);
                     auto const& pt2 = jet_pt->at(j);
@@ -877,6 +885,17 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
                         float dR_bb = jet.DeltaR(jet2);
                         if (dR_bb < min_dR_bb) min_dR_bb = dR_bb;
                     }
+                }
+
+                // loop over leptons to calculate min_m_lb and min_dR_lb
+                for (unsigned int j = 0; j < 2; j++) {
+                    TLorentzVector lep;
+                    lep.SetPtEtaPhiM(lep_pt->at(j), lep_eta->at(j), lep_phi->at(j), lep_mass->at(j));
+                    float m_lb = (jet + lep).M();
+                    if (m_lb < min_m_lb) min_m_lb = m_lb;
+
+                    float dR_lb = jet.DeltaR(lep);
+                    if (dR_lb < min_dR_lb) min_dR_lb = dR_lb;
                 }
             }
         }
@@ -933,7 +952,8 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           // dilepton hists
           h_m_ll.at(i_bjet)->Fill(dilep.M(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_pt_ll.at(i_bjet)->Fill(dilep.Pt(), event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
-          //h_m_lb.at(i_bjet)->Fill(min_mlb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_m_lb.at(i_bjet)->Fill(min_m_lb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+          h_dR_lb.at(i_bjet)->Fill(min_dR_lb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_m_bb.at(i_bjet)->Fill(min_m_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           h_dR_bb.at(i_bjet)->Fill(min_dR_bb, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
 
@@ -1019,6 +1039,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     plotVariable(h_m_ee, sample_str, plotDir);
     plotVariable(h_m_mumu, sample_str, plotDir);
     plotVariable(h_m_lb, sample_str, plotDir);
+    plotVariable(h_dR_lb, sample_str, plotDir);
     plotVariable(h_m_bb, sample_str, plotDir);
     plotVariable(h_dR_bb, sample_str, plotDir);
     plotVariable(h_nPVs, sample_str, plotDir);
@@ -1065,6 +1086,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
    WRITE_HISTOGRAM(h_m_ee)\
    WRITE_HISTOGRAM(h_m_mumu)\
    WRITE_HISTOGRAM(h_m_lb)\
+   WRITE_HISTOGRAM(h_dR_lb)\
    WRITE_HISTOGRAM(h_m_bb)\
    WRITE_HISTOGRAM(h_dR_bb)\
    WRITE_HISTOGRAM(h_nPVs)\
