@@ -806,7 +806,6 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
           if (njet_ct_btagged_c > 0 || njet_ct_btagged_udsg < 1) continue;
           break;
         default:
-          if (!isData) continue;
           break;
       }
 
@@ -943,7 +942,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
             h_m_mumu.at(i_bjet)->Fill(dilepton_mass, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           }
           if (abs(dilepton_id) == 121) {
-            h_m_mumu.at(i_bjet)->Fill(dilepton_mass, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
+            h_m_ee.at(i_bjet)->Fill(dilepton_mass, event_wgt * event_wgt_triggers_dilepton_matched * event_wgt_SFs_btagging * event_wgt_xsecCORRECTION * event_wgt_SFs_leptons);
           }
 
           // Primary vertex hists 

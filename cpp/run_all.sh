@@ -108,9 +108,9 @@ echo ""
 # Plotting the Histograms 
 echo "Beginning to plot..."
 export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased_fakes"
-root -q -l -b check_fakes_stack_2018.C > logs/check_fakes_stack_2018.log 2>&1 &
+root -q -l -b check_Z_stack_fakes_2018.C > logs/check_Z_stack_fakes_2018.log 2>&1 &
 export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased_samples"
-root -q -l -b check_fakes_stack_2018_samples.C > logs/check_fakes_stack_2018_samples.log 2>&1 &
+root -q -l -b check_Z_stack_samples_2018.C > logs/check_Z_stack_samples_2018.log 2>&1 &
 
 # give it time to run
 echo "All plotting scripts have begun. View the logs in logs/*"
