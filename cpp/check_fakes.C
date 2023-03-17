@@ -492,7 +492,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     */
     
     const int NUM_NB_CATEGORIES = 5;
-    const int BTAG_WP = 0; // 0 loose, 1 medium, 2 tight
+    const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
     constexpr float pt_threshold_btagged = 25.;
     constexpr float pt_threshold_unbtagged = 25.;
 
@@ -727,6 +727,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
       // apply the lepton cuts pt > 25,20
       if (lep_pt->at(0) < 25 || lep_pt->at(1) < 20) continue;
 
+      // split the ee and mumu
+      if (abs(dilepton_id) == 169) continue;
+      if (abs(dilepton_id) == 121) continue;
+
       
       // progress bar
       nEventsTotal++;
@@ -899,6 +903,10 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
                 }
             }
         }
+      
+      // cut on min_m_lb to select for DY enriched
+      if (min_m_lb < 130) continue;
+
 
       // Fill histograms
       for (unsigned int i_bjet = 0; i_bjet < NUM_NB_CATEGORIES; i_bjet++){
