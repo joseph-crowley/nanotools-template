@@ -18,16 +18,12 @@
  STACK_HIST("jetphi")\
  STACK_HIST("nbjet_loose")\
  STACK_HIST("nbjet_medium")\
- STACK_HIST("nbjet_tight")\
  STACK_HIST("bjetpt_loose")\
  STACK_HIST("bjetpt_medium")\
- STACK_HIST("bjetpt_tight")\
  STACK_HIST("bjetphi_loose")\
  STACK_HIST("bjetphi_medium")\
- STACK_HIST("bjetphi_tight")\
  STACK_HIST("bjeteta_loose")\
- STACK_HIST("bjeteta_medium")\
- STACK_HIST("bjeteta_tight")
+ STACK_HIST("bjeteta_medium")
 
 #define STACK_HISTS_NB_CATEGORIES_LT2 \
  STACK_HIST("njet_nb_lt2")\
@@ -170,7 +166,6 @@
  PLOT_HIST2D("jetetaphi")\
  PLOT_HIST2D("bjetetaphi_loose")\
  PLOT_HIST2D("bjetetaphi_medium")\
- PLOT_HIST2D("bjetetaphi_tight")\
  PLOT_HIST2D("ele_etaphi_nb_lt2")\
  PLOT_HIST2D("ele_etaphi_nb_eq0")\
  PLOT_HIST2D("ele_etaphi_nb_eq1")\

@@ -7,8 +7,8 @@ cd ~/tttt/CMSSW_10_6_26/src/tttt; cmsenv; eval $(./setup.sh env); cd -
 # specify file directory for the input root files
 current_date=$(date +%Y_%m_%d)
 
-export FILEDIRDATA="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230307_dilepton_Z_check_data"
-export FILEDIRMC="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230307_dilepton_Z_check_mc"
+export FILEDIRDATA="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230313_dilepton_Z_check_data"
+export FILEDIRMC="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230313_dilepton_Z_check_mc"
 
 export FILEDIR="/ceph/cms/store/group/tttt/Worker/crowley/output/Analysis_TTJetRadiation/230223_tt_bkg_Cutbased"
 export PLOTDIR="/home/users/crowley/public_html/tttt/${current_date}_analyze_bjets_stacked_Cutbased"

@@ -492,7 +492,7 @@ int ScanChain(TChain *ch, string sample_str, string plotDir, string rootDir, int
     */
     
     const int NUM_NB_CATEGORIES = 5;
-    const int BTAG_WP = 1; // 0 loose, 1 medium, 2 tight
+    const int BTAG_WP = 2; // 0 loose, 1 medium, 2 tight
     constexpr float pt_threshold_btagged = 25.;
     constexpr float pt_threshold_unbtagged = 25.;
 
